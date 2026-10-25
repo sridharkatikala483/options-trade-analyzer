@@ -106,10 +106,39 @@ Decision: retrieval **is** required, for two kinds of knowledge that tools canno
 | Data freshness | Stale or missing data flagged | 100% |
 | Conflict detection | Planted conflicts caught | >= 90% |
 
+- **Independent verification (Checkpoint 2 feedback):** every scenario's Greeks, prices, breakevens and
+  strategy payoffs are checked against a separately written Black-Scholes and payoff calculation
+  (`tests/test_reliability.py` already does this for 72 price/Greek cases and the spread example).
+- **Error tracking:** count false risk omissions (answer-key risks missing from the report) and incorrect
+  statements or recommendations (any recommendation to trade, misstated alternative, or number that
+  does not match a tool output, such as the wrong earnings date in the Checkpoint 3 demo).
+- **Critic change log:** save each report before and after Critic review, and record every change and
+  whether it fixed or introduced an error.
 - **Proving the Critic helps:** run every scenario with and without the Critic; plant known errors (wrong
   breakeven, missed earnings date, contradictory conclusions) and count catches; track false alarms
   (precision) and extra cost (time, LLM calls). Keep the Critic only if it raises scores without frequent
   false alarms.
+
+## Data-quality checks (from instructor feedback on Checkpoint 2)
+
+Computed in Python (`analytics/data_quality.py`) and returned in `get_option_contract`'s `data_quality`
+block; the agent must report every item and may not judge liquidity itself.
+
+| Check | Rule | AAPL 350 call, Nov 6, 2026 (demo) |
+| --- | --- | --- |
+| Quote freshness | Last trade time; `fresh` (<= 30 min) / `delayed` during the session, `market closed` otherwise | Last trade Fri 15:59 ET -> market closed |
+| Liquidity | Worst of: spread <= 10% good, <= 25% fair; volume >= 100 / >= 10; open interest >= 500 / >= 100 | good (4% spread, 791 volume, 5,461 OI) |
+| Model vs market | Black-Scholes price vs bid/mid/ask; flag gaps >= 5% | model $8.05 vs mid $7.50 (+7.3%), outside bid-ask -> flagged |
+| Assumption flags | earnings before expiry, <= 3 days left, >= 15% out of the money, ex-dividend before expiry | earnings before expiry -> post-earnings prices are scenarios |
+
+## Lower-risk alternative (from Checkpoint 2 feedback)
+
+`compare_strategies` evaluates the long option and a vertical spread (sell the listed strike nearest 3%
+beyond the bought strike) with the same chain mid-prices and expiration (`analytics/strategies.py`).
+Demo: long 350 call costs $750 (max loss $750, breakeven $357.50, unlimited gain); 350/360 bull call
+spread costs $405 (max loss $405, breakeven $354.05, max gain $595). At $345 at expiry: -$750 vs -$405;
+at $355: -$250 vs +$95; at $370: +$1,250 vs +$595. Lower risk does not guarantee profit: the spread
+still loses its full cost below $350 and caps the gain.
 
 ## Technology choices
 
@@ -126,6 +155,7 @@ Decision: retrieval **is** required, for two kinds of knowledge that tools canno
 - [x] Wrap data and math functions as agent tools (`agents/tools.py`)
 - [x] Options Analysis agent end to end (`agents/options_agent.py`, LangGraph ReAct)
 - [x] Retrieval layer: knowledge base + news with MMR (Checkpoint 3)
+- [x] Data-quality checks and strategy comparison tool (Checkpoint 2 feedback)
 - [ ] Stock, News and Sentiment, Risk agents
 - [ ] LangGraph orchestration with shared state, Critic, revision loop (max 2)
 - [ ] Report-vs-tool consistency check

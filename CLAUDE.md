@@ -38,13 +38,18 @@ src/options_trade_analyzer/
   data/__init__.py                      get_provider(name) factory
   data/news.py                          recent headlines from public RSS (Yahoo Finance, Google News)
   analytics/options_math.py             Black-Scholes price, Greeks, breakeven, payoff (via vollib)
+  analytics/data_quality.py             quote freshness, liquidity rating, model-vs-market gap, assumption flags
+  analytics/strategies.py               multi-leg payoff math (Leg, max loss/gain, breakevens) for comparisons
   retrieval/vector_index.py             numpy vector index: cosine search, similarity floor, MMR
   retrieval/knowledge.py                knowledge-base chunking + cached index (data/index/, gitignored)
   retrieval/news.py                     per-request headline index with MMR and 14-day cutoff
-  agents/tools.py                       LangChain tools (contract, Greeks, earnings date, 2 retrieval tools)
+  agents/tools.py                       LangChain tools (contract + data_quality, Greeks, earnings date,
+                                        compare_strategies, 2 retrieval tools)
   agents/options_agent.py               Options Analysis ReAct agent; analyze_contract(..., use_retrieval)
 scripts/check_setup.py                  environment smoke test (exits 1 on failure)
 tests/test_options_math.py              textbook-value tests for the math
+tests/test_reliability.py               independent Black-Scholes cross-check, data-quality and strategy tests
+tests/test_retrieval.py                 offline chunking, search, similarity floor and MMR tests
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
 data/knowledge/                         synthetic options-education notes (the RAG corpus)
 data/snapshots/                         saved market data for repeatable evaluation scenarios

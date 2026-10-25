@@ -18,6 +18,8 @@ class MarketDataProvider(Protocol):
 
     def get_next_earnings_date(self, ticker: str) -> dt.date | None: ...
 
+    def get_next_ex_dividend_date(self, ticker: str) -> dt.date | None: ...
+
 
 class YFinanceProvider:
     """Free data from Yahoo Finance. Unofficial and sometimes delayed."""
@@ -43,3 +45,8 @@ class YFinanceProvider:
         dates = yf.Ticker(ticker).calendar.get("Earnings Date") or []
         upcoming = [d for d in dates if d >= dt.date.today()]
         return min(upcoming) if upcoming else None
+
+    def get_next_ex_dividend_date(self, ticker: str) -> dt.date | None:
+        """Next ex-dividend date on or after today, or None if none is announced."""
+        date = yf.Ticker(ticker).calendar.get("Ex-Dividend Date")
+        return date if isinstance(date, dt.date) and date >= dt.date.today() else None

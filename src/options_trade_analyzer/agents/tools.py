@@ -10,7 +10,8 @@ import json
 from langchain_core.tools import BaseTool, tool
 
 from options_trade_analyzer import config
-from options_trade_analyzer.analytics import options_math
+from options_trade_analyzer.analytics import data_quality, options_math, strategies
+from options_trade_analyzer.analytics.strategies import Leg
 from options_trade_analyzer.data import get_provider
 from options_trade_analyzer.retrieval.knowledge import search_knowledge
 from options_trade_analyzer.retrieval.news import search_news
@@ -51,22 +52,43 @@ def get_option_contract(ticker: str, option_type: str, strike: float, expiration
     row = rows.iloc[0]
     bid, ask = float(row["bid"]), float(row["ask"])
     premium = (bid + ask) / 2 if bid > 0 and ask > 0 else float(row["lastPrice"])
+    spot = provider.get_quote(ticker)
+    iv = float(row["impliedVolatility"])
+    volume = int(row["volume"]) if row["volume"] == row["volume"] else 0
+    open_interest = int(row["openInterest"]) if row["openInterest"] == row["openInterest"] else 0
+    spread_pct = round((ask - bid) / premium * 100, 1) if premium and bid > 0 and ask > 0 else None
+    days = (dt.date.fromisoformat(expiration) - dt.date.today()).days
+    expiry = dt.date.fromisoformat(expiration)
+    earnings = provider.get_next_earnings_date(ticker)
+    ex_dividend = provider.get_next_ex_dividend_date(ticker)
+    model_price = options_math.bs_price(option_type, spot, strike, _years_to_expiry(expiration),
+                                        config.RISK_FREE_RATE, iv)
     return _json({
         "ticker": ticker,
         "option_type": option_type,
         "strike": strike,
         "expiration": expiration,
-        "stock_price": round(provider.get_quote(ticker), 2),
+        "stock_price": round(spot, 2),
         "premium": round(premium, 2),
         "bid": bid,
         "ask": ask,
-        "spread_pct_of_premium": round((ask - bid) / premium * 100, 1) if premium else None,
-        "implied_volatility_pct": round(float(row["impliedVolatility"]) * 100, 1),
-        "volume": int(row["volume"]) if row["volume"] == row["volume"] else 0,
-        "open_interest": int(row["openInterest"]) if row["openInterest"] == row["openInterest"] else 0,
-        "days_to_expiry": (dt.date.fromisoformat(expiration) - dt.date.today()).days,
+        "spread_pct_of_premium": spread_pct,
+        "implied_volatility_pct": round(iv * 100, 1),
+        "volume": volume,
+        "open_interest": open_interest,
+        "days_to_expiry": days,
         "breakeven": round(options_math.breakeven(option_type, strike, premium), 2),
         "max_loss_per_contract": round(premium * 100, 2),
+        "data_quality": {
+            "quote": data_quality.quote_freshness(row["lastTradeDate"].to_pydatetime(), dt.datetime.now(dt.timezone.utc)),
+            "liquidity": data_quality.liquidity_rating(spread_pct, volume, open_interest),
+            "model_vs_market": data_quality.model_vs_market(model_price, bid, ask),
+            "model_assumption_flags": data_quality.model_assumption_flags(
+                option_type, spot, strike, days,
+                earnings_before_expiry=earnings is not None and earnings <= expiry,
+                ex_dividend_before_expiry=ex_dividend is not None and ex_dividend <= expiry,
+            ),
+        },
     })
 
 
@@ -90,6 +112,47 @@ def compute_greeks(option_type: str, stock_price: float, strike: float, expirati
         **{name: round(value, 4) for name, value in greeks.items()},
         "theta_per_contract_per_day": round(greeks["theta"] * 100, 2),
         "note": "Black-Scholes approximates American-style options",
+    })
+
+
+@tool
+def compare_strategies(ticker: str, option_type: str, strike: float, expiration: str) -> str:
+    """Compare the requested long option with a lower-risk vertical spread (bull call spread for a
+    call, bear put spread for a put) using the same quotes and expiration: cost, max loss, max gain,
+    breakevens and profit/loss at several expiration prices."""
+    if option_type not in ("call", "put"):
+        return _json({"error": "option_type must be 'call' or 'put'"})
+    if expiration not in provider.get_expirations(ticker):
+        return _json({"error": f"no {ticker} options expire on {expiration}"})
+    chain = provider.get_option_chain(ticker, expiration)[f"{option_type}s"]
+    chain = chain[(chain["bid"] > 0) & (chain["ask"] > 0)]
+    mids = {float(r.strike): (float(r.bid) + float(r.ask)) / 2 for r in chain.itertuples()}
+    if strike not in mids:
+        return _json({"error": f"no two-sided quote for strike {strike}"})
+
+    # Sell the listed strike nearest to 3% beyond the bought strike, in the direction of the bet.
+    spot = provider.get_quote(ticker)
+    target = strike + 0.03 * spot if option_type == "call" else strike - 0.03 * spot
+    candidates = [s for s in mids if (s > strike if option_type == "call" else s < strike)]
+    if not candidates:
+        return _json({"error": "no strike available to sell for a spread"})
+    short = min(candidates, key=lambda s: abs(s - target))
+
+    single = [Leg(option_type, strike, mids[strike])]
+    spread = single + [Leg(option_type, short, mids[short], -1)]
+    levels = sorted({round(spot * f, 2) for f in (0.95, 1.0, 1.05)} | {strike, short}
+                    | set(strategies.breakevens(spread)) | set(strategies.breakevens(single)))
+    name = "bull call spread" if option_type == "call" else "bear put spread"
+    return _json({
+        "stock_price": round(spot, 2),
+        "expiration": expiration,
+        "pricing": "mid-prices of the same option chain; payoffs at expiration",
+        "strategies": [
+            strategies.summarize(f"long {strike:g} {option_type}", single, levels),
+            strategies.summarize(f"{name} {strike:g}/{short:g}", spread, levels),
+        ],
+        "note": "Lower cost and lower maximum loss do not guarantee a profit: the spread still loses "
+                "its full cost if the stock does not pass the bought strike, and it caps the gain.",
     })
 
 
@@ -125,5 +188,5 @@ def search_recent_news(ticker: str, query: str) -> str:
     ]})
 
 
-CORE_TOOLS: list[BaseTool] = [get_option_contract, compute_greeks, get_earnings_date]
+CORE_TOOLS: list[BaseTool] = [get_option_contract, compute_greeks, get_earnings_date, compare_strategies]
 RETRIEVAL_TOOLS: list[BaseTool] = [search_options_knowledge, search_recent_news]
