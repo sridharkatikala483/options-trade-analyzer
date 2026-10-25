@@ -67,6 +67,24 @@ Strategies to compare: long call/put, vertical spread, covered call, cash-secure
 | Greeks, breakeven, payoff calculators | Computation: model makes arithmetic errors |
 | Strategy comparison | Computation: many exact payoff calculations |
 
+## Retrieval (RAG) — Checkpoint 3
+
+Decision: retrieval **is** required, for two kinds of knowledge that tools cannot supply as numbers.
+
+| Source | Data | Chunking | Retrieval | Why |
+| --- | --- | --- | --- | --- |
+| Options knowledge base | 18 synthetic notes in `data/knowledge/*.md` | One chunk per `##` section, max 120 words, `title | section` prepended (DPR style) -> 38 chunks | top 3 of 10 candidates, MMR lambda 0.7, similarity floor 0.58 | Grounds explanations (volatility crush, decay, liquidity) and makes them citable `[KB: source]` |
+| Recent news | Yahoo Finance + Google News RSS headlines (public, no key) | One headline = one chunk | top 5 of 25, MMR lambda 0.4, only last 14 days | Coverage is redundant (one story, many outlets); MMR keeps distinct stories |
+
+- Embeddings: local Ollama `nomic-embed-text` (768-d) with `search_document:` / `search_query:` prefixes.
+- Vector index: `retrieval/vector_index.py` (numpy cosine + MMR), knowledge index cached in `data/index/`
+  and rebuilt when notes change.
+- Agent tools: `search_options_knowledge`, `search_recent_news`; `use_retrieval=False` removes them for
+  comparison (`scripts/retrieval_demo.py` -> `docs/retrieval_demo.md`).
+- Failure modes handled: off-topic matches (similarity floor, agent told "nothing relevant"), stale news
+  (14-day cutoff), duplicate coverage (MMR), misapplied general guidance (prompt requires checking
+  passages against the contract's actual numbers; observed in early runs).
+
 ## Feedback points
 
 1. Tool results shape the next step.
@@ -105,8 +123,9 @@ Strategies to compare: long call/put, vertical spread, covered call, cash-secure
 ## Implementation status
 
 - [x] Project setup, data provider (yfinance), options math with tests, starter dashboard
-- [ ] Wrap data and math functions as agent tools
-- [ ] Options Analysis agent end to end (first vertical slice)
+- [x] Wrap data and math functions as agent tools (`agents/tools.py`)
+- [x] Options Analysis agent end to end (`agents/options_agent.py`, LangGraph ReAct)
+- [x] Retrieval layer: knowledge base + news with MMR (Checkpoint 3)
 - [ ] Stock, News and Sentiment, Risk agents
 - [ ] LangGraph orchestration with shared state, Critic, revision loop (max 2)
 - [ ] Report-vs-tool consistency check

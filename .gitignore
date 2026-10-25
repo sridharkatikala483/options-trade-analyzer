@@ -16,3 +16,6 @@ data/history.db
 
 # macOS
 .DS_Store
+
+# Generated vector index (rebuilt from data/knowledge/)
+data/index/

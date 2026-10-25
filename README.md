@@ -12,6 +12,7 @@ Requires [uv](https://docs.astral.sh/uv/) and, for the free local LLM, [Ollama](
 uv sync                      # installs Python 3.12 and all dependencies into .venv
 cp .env.example .env         # then edit .env
 ollama pull qwen3:8b         # local model (about 5 GB), only needed for LLM_PROVIDER=ollama
+ollama pull nomic-embed-text # embedding model for retrieval (about 270 MB), always needed
 ```
 
 ## Switching LLMs
@@ -27,6 +28,7 @@ Set `LLM_PROVIDER` in `.env`:
 uv run python scripts/check_setup.py   # verify market data and the LLM both work
 uv run pytest                          # unit tests for the options math
 uv run streamlit run app.py            # open the dashboard at http://localhost:8501
+uv run python scripts/retrieval_demo.py  # agent with vs without retrieval -> docs/retrieval_demo.md
 ```
 
 ## Project layout
