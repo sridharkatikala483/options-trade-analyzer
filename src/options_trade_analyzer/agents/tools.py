@@ -72,6 +72,7 @@ def get_option_contract(ticker: str, option_type: str, strike: float, expiration
         "premium": round(premium, 2),
         "bid": bid,
         "ask": ask,
+        "spread_dollars": round(ask - bid, 2) if bid > 0 and ask > 0 else None,
         "spread_pct_of_premium": spread_pct,
         "implied_volatility_pct": round(iv * 100, 1),
         "volume": volume,

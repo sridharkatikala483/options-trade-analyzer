@@ -5,6 +5,7 @@ an LLM whether the report is right; it compares the report with what the tools a
 
 Checks:
   completeness    every required tool was called (conditional on earnings and retrieval)
+  tool inputs     Greeks and strategy calls used the contract's real price, IV, strike and expiry
   numbers         every number in the report appears in a tool result (allowing for rounding)
   dates           every date in the report is one the tools returned (earnings, expiry, quote, news)
   liquidity       liquidity wording agrees with the code's liquidity rating
@@ -26,6 +27,7 @@ ISO_DATE = re.compile(r"\b(20\d\d)-(\d\d)-(\d\d)\b")
 WORD_DATE = re.compile(r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?"
                        r"(?:,?\s+(20\d\d))?\b", re.I)
 NUMBER = re.compile(r"(?<![\w.#])[-−]?\$?\d[\d,]*(?:\.\d+)?%?")
+DAY_COUNT = re.compile(r"(?<![\w.#])(\d{1,3})\s+(?:calendar\s+|trading\s+)?days?\b", re.I)
 LIST_MARKER = re.compile(r"^\s*\d+[.)]\s", re.M)
 LOW_LIQUIDITY_WORDS = re.compile(
     r"\bwid(e|er|en|ening)\b[^.\n]{0,40}\bspreads?\b|\bspreads?\b[^.\n]{0,25}\bwide\b|\billiquid|"
@@ -142,13 +144,18 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool) -
     # --- numbers ---
     allowed = set()
     for c in calls:
-        for n in _numbers_in(c.result) + _numbers_in(c.args):
+        scenario = [c.args["iv_change_pct"]] if c.args.get("iv_change_pct") else []
+        for n in _numbers_in(c.result) + [float(x) for x in scenario]:
             allowed |= {n, n * 100, n / 100}
     allowed |= {float(request["strike"])}
     text = KB_CITATION.sub(" ", NEWS_CITATION.sub(" ", report))
     text = ISO_DATE.sub(" ", WORD_DATE.sub(" ", LIST_MARKER.sub(" ", text)))
     unsupported = []
+    day_counts = set(DAY_COUNT.findall(text))
     for token in NUMBER.findall(text):
+        if token in day_counts and not _matches(float(token), 0, allowed):
+            unsupported.append(f"{token} days")
+            continue
         value = _to_float(token)
         if value is None or (float(value).is_integer() and abs(value) <= SMALL_INT_LIMIT and "$" not in token):
             continue
@@ -156,6 +163,31 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool) -
             unsupported.append(token)
     for token in sorted(set(unsupported)):
         v.issues.append(f"Number not found in any tool result: {token}.")
+
+    # --- tool inputs must match the contract (a right formula on wrong inputs is still wrong) ---
+    input_errors = []
+    quote_call = by_name.get("get_option_contract")
+    contract = quote_call.result if quote_call else {}
+    for c in calls:
+        if c.name == "compute_greeks" and contract.get("stock_price"):
+            for arg, key in (("stock_price", "stock_price"), ("implied_volatility_pct", "implied_volatility_pct")):
+                if arg in c.args and abs(float(c.args[arg]) - float(contract[key])) > 0.011:
+                    input_errors.append(f"compute_greeks was called with {arg}={c.args[arg]} but "
+                                        f"get_option_contract returned {contract[key]}; recompute with the correct value.")
+        if c.name in ("compute_greeks", "compare_strategies", "get_option_contract"):
+            if "strike" in c.args and abs(float(c.args["strike"]) - float(request["strike"])) > 1e-6:
+                input_errors.append(f"{c.name} was called with strike {c.args['strike']}, not the requested {request['strike']:g}.")
+            if c.args.get("expiration") and c.args["expiration"] != request["expiration"]:
+                input_errors.append(f"{c.name} was called with expiration {c.args['expiration']}, not {request['expiration']}.")
+    # a corrected later call fixes an earlier wrong one: only flag if no call used the right inputs
+    if input_errors and not any(
+            c.name == "compute_greeks" and not c.args.get("iv_change_pct")
+            and abs(float(c.args.get("stock_price", -1)) - float(contract.get("stock_price", -2))) <= 0.011
+            for c in calls):
+        v.issues += sorted(set(input_errors))
+    else:
+        input_errors = [e for e in input_errors if "compute_greeks" not in e]
+        v.issues += sorted(set(input_errors))
 
     # --- dates ---
     quote = by_name.get("get_option_contract")
@@ -205,6 +237,7 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool) -
         "missing_tools": len(missing),
         "tool_completeness": round(1 - len(missing) / len(required), 2) if required else 1.0,
         "unsupported_numbers": len(set(unsupported)),
+        "tool_input_errors": len(set(input_errors)),
         "date_errors": len(wrong_dates),
         "liquidity_contradictions": 1 if contradictions else 0,
         "citations": total_citations,

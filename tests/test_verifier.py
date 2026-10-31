@@ -121,3 +121,24 @@ def test_retrieval_tools_not_required_without_retrieval():
 def test_recommendation_is_flagged():
     v = verify(GOOD_REPORT + "\nI recommend buying this call.", FULL_TRACE, REQUEST, use_retrieval=True)
     assert any("recommendation" in issue for issue in v.issues)
+
+
+def test_greeks_called_with_wrong_stock_price_is_flagged():
+    wrong = obs("compute_greeks", GREEKS, {"stock_price": 195.22, "implied_volatility_pct": 33.3, "strike": 350,
+                                           "expiration": "2026-11-06"})
+    trace = [FULL_TRACE[0], wrong] + FULL_TRACE[2:]
+    v = verify(GOOD_REPORT, trace, REQUEST, use_retrieval=True)
+    assert any("195.22" in issue for issue in v.issues)
+    assert v.metrics["tool_input_errors"] == 1
+
+
+def test_numbers_from_tool_inputs_do_not_count_as_support():
+    trace = FULL_TRACE + [obs("compute_greeks", GREEKS, {"stock_price": 195.22})]
+    v = verify(GOOD_REPORT + "\nThe stock was $195.22.", trace, REQUEST, use_retrieval=True)
+    assert any("$195.22" in issue for issue in v.issues)
+
+
+def test_wrong_day_count_is_flagged_but_correct_one_passes():
+    assert verify(GOOD_REPORT, FULL_TRACE, REQUEST, use_retrieval=True).passed  # "13 days" is days_to_expiry
+    v = verify(GOOD_REPORT + "\nEarnings come 12 days before expiry.", FULL_TRACE, REQUEST, use_retrieval=True)
+    assert any("12 days" in issue for issue in v.issues)
