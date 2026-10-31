@@ -47,7 +47,8 @@ def threshold_check() -> list[str]:
 
 def agent_section(title: str, ticker: str, option_type: str, strike: float, expiration: str, use_retrieval: bool) -> list[str]:
     started = time.time()
-    result = analyze_contract(ticker, option_type, strike, expiration, use_retrieval=use_retrieval)
+    result = analyze_contract(ticker, option_type, strike, expiration, use_retrieval=use_retrieval,
+                              verify_report=False)  # the Checkpoint 3 baseline, before the verifier
     lines = [f"## {title}", "", f"Run time: {time.time() - started:.0f} s", "", "### Trace", ""]
     for step in result.trace[:-1]:
         text = step["text"] if len(step["text"]) < 600 else step["text"][:600] + " …"

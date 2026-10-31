@@ -42,11 +42,19 @@ class YFinanceProvider:
 
     def get_next_earnings_date(self, ticker: str) -> dt.date | None:
         """Next scheduled earnings date on or after today, or None if Yahoo has none."""
-        dates = yf.Ticker(ticker).calendar.get("Earnings Date") or []
+        dates = self._calendar(ticker).get("Earnings Date") or []
         upcoming = [d for d in dates if d >= dt.date.today()]
         return min(upcoming) if upcoming else None
 
     def get_next_ex_dividend_date(self, ticker: str) -> dt.date | None:
         """Next ex-dividend date on or after today, or None if none is announced."""
-        date = yf.Ticker(ticker).calendar.get("Ex-Dividend Date")
+        date = self._calendar(ticker).get("Ex-Dividend Date")
         return date if isinstance(date, dt.date) and date >= dt.date.today() else None
+
+    @staticmethod
+    def _calendar(ticker: str) -> dict:
+        """Yahoo's events calendar; ETFs and some tickers have none (Yahoo answers 404)."""
+        try:
+            return yf.Ticker(ticker).calendar or {}
+        except Exception:
+            return {}

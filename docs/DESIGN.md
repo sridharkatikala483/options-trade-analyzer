@@ -140,6 +140,32 @@ spread costs $405 (max loss $405, breakeven $354.05, max gain $595). At $345 at 
 at $355: -$250 vs +$95; at $370: +$1,250 vs +$595. Lower risk does not guarantee profit: the spread
 still loses its full cost below $350 and caps the gain.
 
+## Validation loop (from instructor feedback on Checkpoint 3)
+
+`agents/verifier.py` checks every final report against the tool outputs of the same run; failures go back
+to the agent as a revision request, at most 2 rounds (`analyze_contract(..., verify_report=True)`).
+This is the deterministic first stage of the Critic; an LLM Critic for judgment calls comes later.
+
+| Check | Rule |
+| --- | --- |
+| Tool-use completeness | contract, Greeks, earnings date, strategy comparison (+ knowledge and news search with retrieval); the volatility-drop scenario is required when earnings fall on or before expiry |
+| Number consistency | every number in the report must appear in a tool result (rounding allowed; small counts <= 12 ignored) |
+| Dates | only dates the tools returned (earnings, expiry, quote time, news) |
+| Liquidity wording | "wide spread", "illiquid", "low volume/open interest" are rejected when the rating is good |
+| Citations | `[KB: id]` must be a passage retrieved in this run; `[News: ...]` must match a returned headline source |
+| No advice | recommendation phrasing is rejected |
+
+The prompt also states explicit tool-use conditions (IF earnings before expiry THEN run the
+iv_change_pct=-40 scenario; use only compare_strategies numbers for the alternative).
+
+**Measuring retrieval and validation** (`scripts/evaluate.py` -> `docs/evaluation/`): 10 varied contracts
+(calls/puts, 7-45 days, at/out of the money, earnings before expiry or not, an ETF, thin and liquid
+contracts) x 3 setups (`no_retrieval`, `retrieval`, `retrieval_verified`), scored on tool completeness,
+unsupported numbers, date errors, liquidity contradictions (general guidance misapplied), citation
+accuracy, recommendations, revisions, runtime and tokens. Market data and headlines are cached per
+contract so setups are compared on identical inputs. Caveat: the verified setup is revised by the same
+checks that score it, so its first-draft scores are reported too, and reports are spot-checked by hand.
+
 ## Technology choices
 
 - Python 3.12 via uv; LangGraph for orchestration; LangChain model integrations.
@@ -158,7 +184,9 @@ still loses its full cost below $350 and caps the gain.
 - [x] Data-quality checks and strategy comparison tool (Checkpoint 2 feedback)
 - [ ] Stock, News and Sentiment, Risk agents
 - [ ] LangGraph orchestration with shared state, Critic, revision loop (max 2)
-- [ ] Report-vs-tool consistency check
+- [x] Report-vs-tool consistency check + completeness check + revision loop (`agents/verifier.py`)
+- [x] Evaluation harness for retrieval and validation (`scripts/evaluate.py`)
+- [ ] Run the full evaluation (10 contracts x 3 setups) and record results
 - [ ] SQLite long-term memory and comparison with past analyses
 - [ ] Report shown in the dashboard
 - [ ] Scenario snapshots, answer keys and evaluation harness (with/without Critic)

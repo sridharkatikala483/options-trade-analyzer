@@ -45,12 +45,17 @@ src/options_trade_analyzer/
   retrieval/news.py                     per-request headline index with MMR and 14-day cutoff
   agents/tools.py                       LangChain tools (contract + data_quality, Greeks, earnings date,
                                         compare_strategies, 2 retrieval tools)
-  agents/options_agent.py               Options Analysis ReAct agent; analyze_contract(..., use_retrieval)
+  agents/options_agent.py               Options Analysis ReAct agent; analyze_contract(..., use_retrieval,
+                                        verify_report) with up to 2 verification-driven revisions
+  agents/verifier.py                    rule-based report checks: tool completeness, numbers, dates,
+                                        liquidity wording, citations, no advice
 scripts/check_setup.py                  environment smoke test (exits 1 on failure)
 tests/test_options_math.py              textbook-value tests for the math
 tests/test_reliability.py               independent Black-Scholes cross-check, data-quality and strategy tests
 tests/test_retrieval.py                 offline chunking, search, similarity floor and MMR tests
+tests/test_verifier.py                  verifier catches the real flawed run and passes a faithful report
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
+scripts/evaluate.py                     10 contracts x 3 setups, resumable -> docs/evaluation/ (hours on local qwen3)
 data/knowledge/                         synthetic options-education notes (the RAG corpus)
 data/snapshots/                         saved market data for repeatable evaluation scenarios
 ```
@@ -92,6 +97,6 @@ Key seams to keep intact:
 
 ## Planned next steps (from DESIGN.md)
 
-Remaining specialists → LangGraph orchestration with shared state and a Critic (max 2 revision rounds)
-→ report-vs-tool consistency check → SQLite memory → report in the dashboard → evaluation harness
+Run the full evaluation → remaining specialists → LangGraph orchestration with shared state and an
+LLM Critic on top of the rule-based verifier → SQLite memory → report in the dashboard → evaluation harness
 (scenarios with answer keys, run with and without the Critic).
