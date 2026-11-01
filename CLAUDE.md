@@ -97,6 +97,6 @@ Key seams to keep intact:
 
 ## Planned next steps (from DESIGN.md)
 
-Run the full evaluation → remaining specialists → LangGraph orchestration with shared state and an
+Remaining specialists → LangGraph orchestration with shared state and an
 LLM Critic on top of the rule-based verifier → SQLite memory → report in the dashboard → evaluation harness
 (scenarios with answer keys, run with and without the Critic).

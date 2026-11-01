@@ -166,6 +166,25 @@ accuracy, recommendations, revisions, runtime and tokens. Market data and headli
 contract so setups are compared on identical inputs. Caveat: the verified setup is revised by the same
 checks that score it, so its first-draft scores are reported too, and reports are spot-checked by hand.
 
+**Results (qwen3:8b, 30 runs, 2026-10-30/31; full tables in `docs/evaluation/summary.md`):**
+
+| Setup | Tool completeness | Unsupported numbers | Citation accuracy | Avg revisions | Avg seconds |
+| --- | --- | --- | --- | --- | --- |
+| no_retrieval | 96% | 11 | n/a | 0 | 336 |
+| retrieval | 79% | 17 | 92% of 40 | 0 | 303 |
+| retrieval_verified, first draft | 79% | 24 | 91% of 44 | - | - |
+| retrieval_verified, final | 100% | 3 | 89% of 45 | 1.5 | 818 |
+
+- Retrieval alone lowered quality: the agent skipped required tools and added more unsupported numbers
+  while citing sources, i.e. more credibility without more accuracy.
+- The verifier loop restored completeness (100%) and cut unsupported numbers from 24 to 3, at about 2.7x
+  the runtime and 3-4x the input tokens. Invalid citations are flagged but often not fixed (89%).
+- Hand spot-check (JPM 320 put) found errors the rules cannot catch: "deeply out-of-the-money" for a
+  5% OTM strike, a self-computed difference that passed only by coincidental match with another tool
+  number, and a "no relevant news" line next to a news citation. These motivate the LLM Critic.
+- Runner fixes from the run: a 600 s Ollama request timeout (a dropped connection hung one run for
+  hours) and resume reuses already-started contracts (re-resolving on a later day changed SPY's expiry).
+
 ## Technology choices
 
 - Python 3.12 via uv; LangGraph for orchestration; LangChain model integrations.
@@ -186,7 +205,7 @@ checks that score it, so its first-draft scores are reported too, and reports ar
 - [ ] LangGraph orchestration with shared state, Critic, revision loop (max 2)
 - [x] Report-vs-tool consistency check + completeness check + revision loop (`agents/verifier.py`)
 - [x] Evaluation harness for retrieval and validation (`scripts/evaluate.py`)
-- [ ] Run the full evaluation (10 contracts x 3 setups) and record results
+- [x] Run the full evaluation (10 contracts x 3 setups) and record results
 - [ ] SQLite long-term memory and comparison with past analyses
 - [ ] Report shown in the dashboard
 - [ ] Scenario snapshots, answer keys and evaluation harness (with/without Critic)

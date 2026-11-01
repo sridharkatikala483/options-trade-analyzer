@@ -38,7 +38,9 @@ def get_llm(provider: str | None = None) -> BaseChatModel:
 
         # temperature 0 for repeatable runs; qwen3 thinking stays on (kept out of the reply) for reliable
         # tool calls; Ollama's default 4096-token context truncates agent traces, so raise it.
-        return ChatOllama(model=OLLAMA_MODEL, temperature=0, reasoning=True, num_ctx=16384)
+        # The timeout stops a dropped connection (e.g. after the Mac sleeps) from hanging a run forever.
+        return ChatOllama(model=OLLAMA_MODEL, temperature=0, reasoning=True, num_ctx=16384,
+                          client_kwargs={"timeout": 600})
     if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic
 

@@ -137,7 +137,9 @@ def main(limit: int | None, setups: list[str]) -> None:
     tools.provider = provider  # every tool now reads the cached data
     news_retrieval.fetch_headlines = functools.lru_cache(maxsize=None)(news_retrieval.fetch_headlines)
 
-    contracts = [resolve(provider, *spec) for spec in CONTRACT_SPECS[:limit]]
+    # On resume, reuse contracts already started: resolving again on a later day can pick a new expiry.
+    started = {(r["contract"]["ticker"], r["contract"]["option_type"]): r["contract"] for r in runs}
+    contracts = [started.get(spec[:2]) or resolve(provider, *spec) for spec in CONTRACT_SPECS[:limit]]
     for contract in contracts:
         for setup in setups:
             key = (json.dumps(contract, sort_keys=True), setup)
