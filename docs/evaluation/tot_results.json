@@ -1,0 +1,415 @@
+[
+ {
+  "contract": {
+   "ticker": "AAPL",
+   "option_type": "call",
+   "strike": 345.0,
+   "expiration": "2026-11-11"
+  },
+  "original_max_loss": 882.5,
+  "fixed": {
+   "strategy": "bull call spread 345/355",
+   "expiration": "2026-11-11",
+   "max_loss": 455.0,
+   "score": 56.4,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": "bull put spread 345/337.5",
+   "expiration": "2026-11-20",
+   "max_loss": 445.0,
+   "score": 75.6,
+   "pruned": null,
+   "nodes_scored": 24,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bull put spread 345/337.5",
+   "expiration": "2026-11-20",
+   "max_loss": 445.0,
+   "score": 75.6,
+   "pruned": null
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": "bull put spread 345/340",
+   "expiration": "2026-11-20",
+   "max_loss": 295.0,
+   "score": 80.4,
+   "pruned": null,
+   "nodes_scored": 22,
+   "llm_proposals": 7,
+   "llm_fallbacks": 0,
+   "seconds": 48
+  }
+ },
+ {
+  "contract": {
+   "ticker": "AAPL",
+   "option_type": "put",
+   "strike": 345.0,
+   "expiration": "2026-11-11"
+  },
+  "original_max_loss": 845.0,
+  "fixed": {
+   "strategy": "bear put spread 345/335",
+   "expiration": "2026-11-11",
+   "max_loss": 332.5,
+   "score": 64.1,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": "bear put spread 345/337.5",
+   "expiration": "2026-11-20",
+   "max_loss": 305.0,
+   "score": 76.2,
+   "pruned": null,
+   "nodes_scored": 24,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bear put spread 345/337.5",
+   "expiration": "2026-11-20",
+   "max_loss": 305.0,
+   "score": 76.2,
+   "pruned": null
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": "bear put spread 345/340",
+   "expiration": "2026-11-13",
+   "max_loss": 200.0,
+   "score": 80.9,
+   "pruned": null,
+   "nodes_scored": 19,
+   "llm_proposals": 6,
+   "llm_fallbacks": 0,
+   "seconds": 37
+  }
+ },
+ {
+  "contract": {
+   "ticker": "MSFT",
+   "option_type": "call",
+   "strike": 550.0,
+   "expiration": "2026-12-04"
+  },
+  "original_max_loss": 682.5,
+  "fixed": {
+   "strategy": "bull call spread 550/565",
+   "expiration": "2026-12-04",
+   "max_loss": 288.0,
+   "score": 43.7,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": "bull call spread 550/565",
+   "expiration": "2026-12-18",
+   "max_loss": 382.5,
+   "score": 44.8,
+   "pruned": null,
+   "nodes_scored": 10,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bull call spread 550/565",
+   "expiration": "2026-12-18",
+   "max_loss": 382.5,
+   "score": 44.8,
+   "pruned": null
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": "bull call spread 550/565",
+   "expiration": "2026-12-18",
+   "max_loss": 382.5,
+   "score": 44.8,
+   "pruned": null,
+   "nodes_scored": 7,
+   "llm_proposals": 3,
+   "llm_fallbacks": 0,
+   "seconds": 19
+  }
+ },
+ {
+  "contract": {
+   "ticker": "NVDA",
+   "option_type": "call",
+   "strike": 205.0,
+   "expiration": "2026-11-11"
+  },
+  "original_max_loss": 575.0,
+  "fixed": {
+   "strategy": "bull call spread 205/210",
+   "expiration": "2026-11-11",
+   "max_loss": 227.5,
+   "score": 61.4,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": "bull put spread 205/200",
+   "expiration": "2026-11-20",
+   "max_loss": 282.5,
+   "score": 75.6,
+   "pruned": null,
+   "nodes_scored": 24,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bull put spread 205/200",
+   "expiration": "2026-11-20",
+   "max_loss": 282.5,
+   "score": 75.6,
+   "pruned": null
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": "bull put spread 205/202.5",
+   "expiration": "2026-11-13",
+   "max_loss": 137.5,
+   "score": 83.0,
+   "pruned": null,
+   "nodes_scored": 20,
+   "llm_proposals": 7,
+   "llm_fallbacks": 0,
+   "seconds": 50
+  }
+ },
+ {
+  "contract": {
+   "ticker": "TSLA",
+   "option_type": "put",
+   "strike": 380.0,
+   "expiration": "2026-11-11"
+  },
+  "original_max_loss": 540.0,
+  "fixed": {
+   "strategy": "bear put spread 380/367.5",
+   "expiration": "2026-11-11",
+   "max_loss": 238.0,
+   "score": 43.5,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": "bear call spread 380/390",
+   "expiration": "2026-11-13",
+   "max_loss": 312.5,
+   "score": 58.3,
+   "pruned": null,
+   "nodes_scored": 24,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bear call spread 380/390",
+   "expiration": "2026-11-13",
+   "max_loss": 312.5,
+   "score": 58.3,
+   "pruned": null
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": "bear put spread 380/370",
+   "expiration": "2026-11-13",
+   "max_loss": 220.0,
+   "score": 55.6,
+   "pruned": null,
+   "nodes_scored": 19,
+   "llm_proposals": 6,
+   "llm_fallbacks": 0,
+   "seconds": 36
+  }
+ },
+ {
+  "contract": {
+   "ticker": "KO",
+   "option_type": "call",
+   "strike": 94.0,
+   "expiration": "2026-12-04"
+  },
+  "original_max_loss": 232.0,
+  "fixed": {
+   "strategy": "bull call spread 94/97",
+   "expiration": "2026-12-04",
+   "max_loss": 123.5,
+   "score": 56.8,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: a leg has poor liquidity",
+   "nodes_scored": 3,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": null,
+   "pruned": "every candidate pruned"
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: a leg has poor liquidity",
+   "nodes_scored": 3,
+   "llm_proposals": 1,
+   "llm_fallbacks": 0,
+   "seconds": 5
+  }
+ },
+ {
+  "contract": {
+   "ticker": "AMD",
+   "option_type": "call",
+   "strike": 555.0,
+   "expiration": "2026-12-04"
+  },
+  "original_max_loss": 2050.0,
+  "fixed": {
+   "strategy": "bull call spread 555/570",
+   "expiration": "2026-12-04",
+   "max_loss": 442.5,
+   "score": 42.0,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: a leg has poor liquidity",
+   "nodes_scored": 3,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": null,
+   "pruned": "every candidate pruned"
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: a leg has poor liquidity",
+   "nodes_scored": 3,
+   "llm_proposals": 1,
+   "llm_fallbacks": 0,
+   "seconds": 5
+  }
+ },
+ {
+  "contract": {
+   "ticker": "SPY",
+   "option_type": "call",
+   "strike": 755.0,
+   "expiration": "2026-11-09"
+  },
+  "original_max_loss": 918.0,
+  "fixed": {
+   "strategy": "bull call spread 755/780",
+   "expiration": "2026-11-09",
+   "max_loss": 868.0,
+   "score": 33.6,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": "cheaper call 775",
+   "expiration": "2026-11-09",
+   "max_loss": 114.0,
+   "score": 67.3,
+   "pruned": null,
+   "nodes_scored": 13,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "cheaper call 775",
+   "expiration": "2026-11-09",
+   "max_loss": 114.0,
+   "score": 67.3,
+   "pruned": null
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": "cheaper call 780",
+   "expiration": "2026-11-10",
+   "max_loss": 70.5,
+   "score": 67.9,
+   "pruned": null,
+   "nodes_scored": 15,
+   "llm_proposals": 5,
+   "llm_fallbacks": 0,
+   "seconds": 29
+  }
+ },
+ {
+  "contract": {
+   "ticker": "F",
+   "option_type": "call",
+   "strike": 14.0,
+   "expiration": "2026-12-18"
+  },
+  "original_max_loss": 10.5,
+  "fixed": {
+   "strategy": "bull call spread 14/14.67",
+   "expiration": "2026-12-18",
+   "max_loss": 5.0,
+   "score": 32.4,
+   "pruned": "score below 40"
+  },
+  "beam_rules": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: score below 40, maximum loss is not lower than the original, a leg has poor liquidity",
+   "nodes_scored": 3,
+   "chains_loaded": 2
+  },
+  "exhaustive": {
+   "strategy": null,
+   "pruned": "every candidate pruned"
+  },
+  "exhaustive_candidates": 14,
+  "beam_llm": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: score below 40, maximum loss is not lower than the original, a leg has poor liquidity",
+   "nodes_scored": 3,
+   "llm_proposals": 1,
+   "llm_fallbacks": 0,
+   "seconds": 5
+  }
+ },
+ {
+  "contract": {
+   "ticker": "JPM",
+   "option_type": "put",
+   "strike": 320.0,
+   "expiration": "2026-12-04"
+  },
+  "original_max_loss": 375.0,
+  "fixed": {
+   "strategy": "bear put spread 320/310",
+   "expiration": "2026-12-04",
+   "max_loss": 169.0,
+   "score": 42.5,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": "bear put spread 320/310",
+   "expiration": "2026-12-18",
+   "max_loss": 187.0,
+   "score": 46.6,
+   "pruned": null,
+   "nodes_scored": 9,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bear put spread 320/310",
+   "expiration": "2026-12-18",
+   "max_loss": 187.0,
+   "score": 46.6,
+   "pruned": null
+  },
+  "exhaustive_candidates": 24,
+  "beam_llm": {
+   "strategy": "bear put spread 320/315",
+   "expiration": "2026-12-18",
+   "max_loss": 107.5,
+   "score": 61.1,
+   "pruned": null,
+   "nodes_scored": 10,
+   "llm_proposals": 4,
+   "llm_fallbacks": 0,
+   "seconds": 23
+  }
+ }
+]

@@ -157,3 +157,22 @@ def test_verifier_accepts_the_searched_expiration_and_requires_the_tool(market):
     assert not any("Date" in i or "Number" in i for i in v.issues), v.issues
     assert any("compare_strategies" in i for i in verify(report, trace, request, False).issues)
     assert not any("search_alternatives" in i for i in v.issues)
+
+
+class ThinFirstExpiration(FakeProvider):
+    """Every quote on the original expiration is thin, like a quiet mid-week weekly."""
+
+    def get_option_chain(self, ticker, expiration):
+        chain = super().get_option_chain(ticker, expiration)
+        if expiration == EXPIRATIONS[0]:
+            for df in chain.values():
+                df["volume"], df["openInterest"] = 0, 3
+        return chain
+
+
+def test_thin_original_expiration_does_not_prune_every_family():
+    market = alt.Market(ThinFirstExpiration(), "TEST", RATE, today=TODAY)
+    result = run(market)
+    assert result["outcome"] == "alternative found"
+    assert result["selected"]["expiration"] != EXPIRATIONS[0]
+    assert result["selected"]["score"] == exhaustive(market, "call", 102.0, EXPIRATIONS[0])[0].score

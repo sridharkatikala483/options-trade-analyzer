@@ -59,6 +59,7 @@ tests/test_verifier.py                  verifier catches the real flawed run and
 tests/test_tot.py                       ToT search on a synthetic Black-Scholes chain (scoring, pruning, beam)
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
 scripts/evaluate.py                     10 contracts x 3 setups, resumable -> docs/evaluation/ (hours on local qwen3)
+scripts/evaluate_tot.py                 ToT vs fixed spread vs exhaustive on the same contracts -> docs/evaluation/tot_summary.md
 data/knowledge/                         synthetic options-education notes (the RAG corpus)
 data/snapshots/                         saved market data for repeatable evaluation scenarios
 ```
@@ -104,6 +105,6 @@ Key seams to keep intact:
 
 ## Planned next steps (from DESIGN.md)
 
-Evaluate the ToT alternative search → remaining specialists → LangGraph orchestration with shared state and an
+ToT report quality end to end → remaining specialists → LangGraph orchestration with shared state and an
 LLM Critic on top of the rule-based verifier → SQLite memory → report in the dashboard → evaluation harness
 (scenarios with answer keys, run with and without the Critic).

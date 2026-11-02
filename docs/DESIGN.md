@@ -157,7 +157,9 @@ one-spread `compare_strategies` when `analyze_contract(..., use_tot=True)`; both
 - Families: call -> bull call spread, bull put spread, cheaper (further OTM) call; put -> bear put spread,
   bear call spread, cheaper put. Spreads keep the original strike as one leg. Strike menu: listed strikes
   1.5-12.5% of the stock price beyond it (defaults 2.5/5/7.5/10%); expiration menu: the original plus up to
-  2 later ones within 60 days. Partial nodes are scored by completing them with default choices (lookahead).
+  2 later ones within 60 days. Partial nodes are scored by their best completion over the default strikes and
+  *every* expiration on the menu (lookahead). The first version completed them at the original expiration
+  only, so a thin original expiration pruned every family at depth 1; the evaluation below found this.
 - Pruning (objective only): a leg with poor liquidity or no two-sided quote, maximum loss not lower than
   the original, or score below 40. Ties within 2 points go to lower max loss, better liquidity, fewer legs.
 - Diversity: the beam keeps each surviving family's best node first at every level. (The design said
@@ -170,7 +172,31 @@ one-spread `compare_strategies` when `analyze_contract(..., use_tot=True)`; both
 - Risk check: `exhaustive()` scores every default path; on the test chain the beam finds the exhaustive best.
 - Example (live, 2026-11-01, rule proposer): AAPL 345 call to Nov 20 (max loss $1,047.50) -> bull put spread
   345/337.5, max loss $445, credit $305, score 78.1; runner-up bull call spread 345/352.5, max loss $372.50.
-  A thin Wednesday weekly (Nov 11) correctly returned "no qualifying alternative: a leg has poor liquidity".
+  A thin Wednesday weekly (Nov 11) first returned "no qualifying alternative"; with the lookahead fix the
+  search moves to the liquid Nov 20 expiration instead.
+
+### Evaluation: ToT vs the fixed spread (`scripts/evaluate_tot.py`, results in `docs/evaluation/tot_summary.md`)
+
+Same 10 contracts as the agent evaluation, same cached market data for every method, all scored on the
+ToT scale. "Usable" = passes the pruning checks. Run 2026-11-01, qwen3:8b proposer with thinking off.
+
+| Method | Usable | Avg score | Avg max-loss cut | Candidates scored |
+| --- | --- | --- | --- | --- |
+| Fixed spread (`compare_strategies`) | 0 of 10 | — | — | 1 |
+| ToT beam, rule proposer | 7 of 10 | 63.5 | 55% | 13.7 |
+| ToT beam, LLM proposer | 7 of 10 | 67.7 | 69% | 12.1 |
+| Exhaustive (default menus) | 7 of 10 | 63.5 | 55% | 32.6 |
+
+- The fixed spread always lowered the maximum loss, but 9 of 10 used a poorly traded leg (it is locked to
+  the original, often thin weekly, expiration and never checks liquidity) and 1 scored below 40.
+- The beam matched the exhaustive best in 10 of 10 while scoring 42% of the candidates. Before the
+  lookahead fix it matched in only 4 of 10 and found usable alternatives in 2 of 10.
+- The LLM proposer beat the rules in 5 of 7, tied 1, lost 1, with 0 of 41 fallbacks, 26 s per search.
+  It can beat "exhaustive" because it picks from the full 8-step strike menu (often narrower spreads),
+  while exhaustive only covers the 4 default steps.
+- No method found a usable alternative for KO, AMD or F: every candidate had a thin leg or too low a
+  score, and the tool says so instead of forcing a pick.
+- Not yet measured: report quality end to end (`analyze_contract(use_tot=True)` in `evaluate.py`).
 
 ## Validation loop (from instructor feedback on Checkpoint 3)
 
@@ -239,7 +265,8 @@ checks that score it, so its first-draft scores are reported too, and reports ar
 - [x] Evaluation harness for retrieval and validation (`scripts/evaluate.py`)
 - [x] Run the full evaluation (10 contracts x 3 setups) and record results
 - [x] Tree-of-Thought lower-risk alternative search (`search_alternatives`, `use_tot`, Checkpoint 4)
-- [ ] Evaluate ToT vs fixed-spread alternative on the evaluation contracts (beam vs exhaustive, report quality)
+- [x] Evaluate ToT vs fixed-spread alternative on the evaluation contracts (beam vs exhaustive; lookahead fix)
+- [ ] ToT report quality end to end (`evaluate.py` setup with `use_tot`)
 - [ ] SQLite long-term memory and comparison with past analyses
 - [ ] Report shown in the dashboard
 - [ ] Scenario snapshots, answer keys and evaluation harness (with/without Critic)

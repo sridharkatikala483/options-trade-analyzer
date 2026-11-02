@@ -158,17 +158,23 @@ class Search:
                 nodes.append(child)
         return {"depth": depth, "nodes": nodes}
 
-    # --- evaluate: Python scores each new node; partial nodes are completed with default choices ---
+    # --- evaluate: Python scores each new node; partial nodes are valued by their best default completion ---
     def evaluate(self, state: SearchState) -> dict:
+        # a partial node is completed over every default expiration, not only the original one: a thin
+        # original expiration would otherwise prune every family at depth 1 before later ones are tried
+        expirations = alt.expiration_choices(self.expiration, self.market)
         for node in (n for n in state["nodes"] if n.depth == state["depth"]):
             if node.depth == 1:
-                completions = alt.strike_choices(node.family, self.strike, self.expiration, self.market,
+                strike_sets = alt.strike_choices(node.family, self.strike, self.expiration, self.market,
                                                  alt.DEFAULT_STRIKES_PCT)
+                completions = [(s, e) for s in strike_sets for e in expirations]
+            elif node.depth == 2:
+                completions = [(node.strikes, e) for e in expirations]
             else:
-                completions = [node.strikes]
+                completions = [(node.strikes, node.expiration)]
             results, reasons = [], []
-            for strikes in completions:
-                position = alt.build(node.family, strikes, node.expiration or self.expiration, self.market)
+            for strikes, expiration in completions:
+                position = alt.build(node.family, strikes, expiration, self.market)
                 if isinstance(position, str):
                     reasons.append(position)
                 else:
