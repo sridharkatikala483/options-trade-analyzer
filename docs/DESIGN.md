@@ -140,6 +140,38 @@ spread costs $405 (max loss $405, breakeven $354.05, max gain $595). At $345 at 
 at $355: -$250 vs +$95; at $370: +$1,250 vs +$595. Lower risk does not guarantee profit: the spread
 still loses its full cost below $350 and caps the gain.
 
+## Tree-of-Thought alternative search — Checkpoint 4
+
+ToT is used for one part of the agent only: finding a lower-risk alternative. Fact gathering stays
+the verified ReAct loop (one correct result per step, so branching would add cost without accuracy).
+`search_alternatives` (`agents/tot_search.py`, scoring in `analytics/alternatives.py`) replaces the fixed
+one-spread `compare_strategies` when `analyze_contract(..., use_tot=True)`; both stay for comparison.
+
+| ToT question | Choice |
+| --- | --- |
+| Thought | One narrowing decision: strategy family (depth 1), strikes (depth 2), expiration (depth 3) |
+| Generator | LLM via `get_llm()` proposes from a menu of listed strikes/expirations (propose, not sample); off-menu replies are discarded and invalid replies fall back to default choices (`TOT_PROPOSER=rules` skips the LLM) |
+| Evaluator | Deterministic Python score out of 100: risk reduction 30, breakeven distance 25, chance beyond breakeven (Black-Scholes) 20, exposure to a 40% IV drop 15, worst-leg liquidity 10 |
+| Search | Beam search, width 3, depth 3, as a LangGraph loop (generate -> evaluate -> select); the tree (parent, legs, score, pruning reason) lives in the graph state |
+
+- Families: call -> bull call spread, bull put spread, cheaper (further OTM) call; put -> bear put spread,
+  bear call spread, cheaper put. Spreads keep the original strike as one leg. Strike menu: listed strikes
+  1.5-12.5% of the stock price beyond it (defaults 2.5/5/7.5/10%); expiration menu: the original plus up to
+  2 later ones within 60 days. Partial nodes are scored by completing them with default choices (lookahead).
+- Pruning (objective only): a leg with poor liquidity or no two-sided quote, maximum loss not lower than
+  the original, or score below 40. Ties within 2 points go to lower max loss, better liquidity, fewer legs.
+- Diversity: the beam keeps each surviving family's best node first at every level. (The design said
+  depth 1, but a family has one node there; crowding happens at depth 2, where it has several strikes.)
+- Limits: at most 24 scored nodes, 3 option chains, about 7 proposal calls, 900 s time limit (best so far).
+- Output: the original, the selected position and a runner-up (cost, max loss/gain, breakevens, payoffs,
+  chance, IV-drop change, liquidity, score and points), pruning reasons, LLM calls and fallbacks. If every
+  branch is pruned, the outcome is "no qualifying alternative" with the reasons. The verifier requires the
+  tool when `use_tot` and accepts the selected position's expiration as a valid date.
+- Risk check: `exhaustive()` scores every default path; on the test chain the beam finds the exhaustive best.
+- Example (live, 2026-11-01, rule proposer): AAPL 345 call to Nov 20 (max loss $1,047.50) -> bull put spread
+  345/337.5, max loss $445, credit $305, score 78.1; runner-up bull call spread 345/352.5, max loss $372.50.
+  A thin Wednesday weekly (Nov 11) correctly returned "no qualifying alternative: a leg has poor liquidity".
+
 ## Validation loop (from instructor feedback on Checkpoint 3)
 
 `agents/verifier.py` checks every final report against the tool outputs of the same run; failures go back
@@ -206,6 +238,8 @@ checks that score it, so its first-draft scores are reported too, and reports ar
 - [x] Report-vs-tool consistency check + completeness check + revision loop (`agents/verifier.py`)
 - [x] Evaluation harness for retrieval and validation (`scripts/evaluate.py`)
 - [x] Run the full evaluation (10 contracts x 3 setups) and record results
+- [x] Tree-of-Thought lower-risk alternative search (`search_alternatives`, `use_tot`, Checkpoint 4)
+- [ ] Evaluate ToT vs fixed-spread alternative on the evaluation contracts (beam vs exhaustive, report quality)
 - [ ] SQLite long-term memory and comparison with past analyses
 - [ ] Report shown in the dashboard
 - [ ] Scenario snapshots, answer keys and evaluation harness (with/without Critic)

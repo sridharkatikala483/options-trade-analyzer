@@ -113,14 +113,15 @@ def _report_dates(text: str, year: int) -> set[dt.date]:
     return dates
 
 
-def required_tools(calls: list[ToolCall], expiration: str, use_retrieval: bool) -> set[str]:
-    required = {"get_option_contract", "compute_greeks", "get_earnings_date", "compare_strategies"}
+def required_tools(calls: list[ToolCall], expiration: str, use_retrieval: bool, use_tot: bool = False) -> set[str]:
+    alternative = "search_alternatives" if use_tot else "compare_strategies"
+    required = {"get_option_contract", "compute_greeks", "get_earnings_date", alternative}
     if use_retrieval:
         required |= {"search_options_knowledge", "search_recent_news"}
     return required
 
 
-def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool) -> Verification:
+def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, use_tot: bool = False) -> Verification:
     """Check `report` against the tool calls in `trace`. `request` holds ticker/option_type/strike/expiration."""
     v = Verification()
     calls = tool_calls(trace)
@@ -128,7 +129,7 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool) -
     by_name = {c.name: c for c in calls}
 
     # --- completeness, including the conditional volatility-drop scenario ---
-    required = required_tools(calls, request["expiration"], use_retrieval)
+    required = required_tools(calls, request["expiration"], use_retrieval, use_tot)
     missing = sorted(required - called)
     earnings = by_name.get("get_earnings_date")
     earnings_date = None
@@ -174,7 +175,7 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool) -
                 if arg in c.args and abs(float(c.args[arg]) - float(contract[key])) > 0.011:
                     input_errors.append(f"compute_greeks was called with {arg}={c.args[arg]} but "
                                         f"get_option_contract returned {contract[key]}; recompute with the correct value.")
-        if c.name in ("compute_greeks", "compare_strategies", "get_option_contract"):
+        if c.name in ("compute_greeks", "compare_strategies", "search_alternatives", "get_option_contract"):
             if "strike" in c.args and abs(float(c.args["strike"]) - float(request["strike"])) > 1e-6:
                 input_errors.append(f"{c.name} was called with strike {c.args['strike']}, not the requested {request['strike']:g}.")
             if c.args.get("expiration") and c.args["expiration"] != request["expiration"]:
@@ -197,6 +198,9 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool) -
     if quote:
         last = quote.result.get("data_quality", {}).get("quote", {}).get("last_trade", "")
         allowed_dates |= _report_dates(last, dt.date.today().year)
+    for c in calls:  # the alternative search may select a different expiration
+        if c.name == "search_alternatives":
+            allowed_dates |= {dt.date.fromisoformat(m.group(0)) for m in ISO_DATE.finditer(json.dumps(c.result))}
     news = by_name.get("search_recent_news")
     for item in (news.result.get("results", []) if news else []):
         allowed_dates |= _report_dates(item.get("date", ""), dt.date.today().year)

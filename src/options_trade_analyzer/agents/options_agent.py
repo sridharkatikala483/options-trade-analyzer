@@ -1,5 +1,6 @@
 """Options Analysis agent: a ReAct (Thought -> Action -> Observation -> Finish) agent built with
-LangGraph's prebuilt loop. `use_retrieval` switches the RAG tools on or off for comparison."""
+LangGraph's prebuilt loop. `use_retrieval` switches the RAG tools on or off for comparison; `use_tot`
+replaces the fixed one-spread comparison with the Tree-of-Thought alternative search."""
 
 import json
 from dataclasses import dataclass, field
@@ -8,7 +9,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.prebuilt import create_react_agent
 
 from options_trade_analyzer import config
-from options_trade_analyzer.agents.tools import CORE_TOOLS, RETRIEVAL_TOOLS
+from options_trade_analyzer.agents.tools import CORE_TOOLS, RETRIEVAL_TOOLS, TOT_TOOLS
 from options_trade_analyzer.agents.verifier import Verification, revision_request, verify
 
 MAX_STEPS = 14  # tool rounds per invocation; each round is two graph steps (model + tools)
@@ -25,7 +26,7 @@ report; a report written without them is rejected automatically.
    expiration; use exactly this date and no other.
 4. IF earnings fall before expiration, call compute_greeks again with iv_change_pct=-40 to estimate
    the option's value after a typical post-earnings volatility drop, and compare the two model prices.
-5. compare_strategies for the same contract. Use ONLY its numbers for the lower-risk alternative.
+{alternative_step}
 {retrieval_steps}
 Rules:
 - Report every item in get_option_contract's data_quality block: quote age or market-closed status,
@@ -43,6 +44,14 @@ Rules:
 Finish with a short report in plain language with exactly these headings:
 Summary, Key numbers, Data quality, Main risks, Lower-risk alternative, What to watch,
 Limits of this analysis.{citation_rule}"""
+
+COMPARE_STEP = "5. compare_strategies for the same contract. Use ONLY its numbers for the lower-risk alternative."
+
+TOT_STEP = """5. search_alternatives for the same contract (same ticker, option type, strike and expiration).
+   It searches spread types, strikes and expirations and scores each candidate. Use ONLY its numbers
+   for the lower-risk alternative: present the selected position (its expiration, cost, maximum loss,
+   maximum gain, breakeven and score) and briefly the runner-up. If its outcome is "no qualifying
+   alternative", say so and give its reason instead of inventing one."""
 
 RETRIEVAL_STEPS = """6. search_options_knowledge for each important risk you found (for example volatility crush,
    time decay, liquidity) and base your explanations on the passages.
@@ -66,12 +75,13 @@ class AnalysisResult:
     tokens: dict = field(default_factory=lambda: {"input": 0, "output": 0})
 
 
-def build_agent(use_retrieval: bool = True):
+def build_agent(use_retrieval: bool = True, use_tot: bool = False):
     prompt = BASE_PROMPT.format(
+        alternative_step=TOT_STEP if use_tot else COMPARE_STEP,
         retrieval_steps=RETRIEVAL_STEPS if use_retrieval else "",
         citation_rule=CITATION_RULE if use_retrieval else "",
     )
-    tools = CORE_TOOLS + (RETRIEVAL_TOOLS if use_retrieval else [])
+    tools = (TOT_TOOLS if use_tot else CORE_TOOLS) + (RETRIEVAL_TOOLS if use_retrieval else [])
     return create_react_agent(config.get_llm(), tools, prompt=prompt)
 
 
@@ -109,11 +119,11 @@ def _token_usage(messages) -> dict:
 
 def analyze_contract(ticker: str, option_type: str, strike: float, expiration: str,
                      use_retrieval: bool = True, verify_report: bool = True,
-                     max_revisions: int = MAX_REVISIONS) -> AnalysisResult:
+                     max_revisions: int = MAX_REVISIONS, use_tot: bool = False) -> AnalysisResult:
     """Run the agent; if verify_report, check the report against the tool outputs and send failures
     back to the agent for revision (at most max_revisions rounds)."""
     request = {"ticker": ticker, "option_type": option_type, "strike": strike, "expiration": expiration}
-    agent = build_agent(use_retrieval)
+    agent = build_agent(use_retrieval, use_tot)
     run_config = {"recursion_limit": 2 * MAX_STEPS + 1}
     messages = [("user", f"Analyze buying the {ticker} {strike:g} {option_type} expiring {expiration}.")]
 
@@ -122,7 +132,7 @@ def analyze_contract(ticker: str, option_type: str, strike: float, expiration: s
     while True:
         trace = to_trace(state["messages"])
         report = trace[-1]["text"] if trace and trace[-1]["step"] == "Finish" and trace[-1]["text"] else ""
-        check = verify(report or "(no report)", trace, request, use_retrieval)
+        check = verify(report or "(no report)", trace, request, use_retrieval, use_tot)
         if not report:
             check.issues.insert(0, "The agent finished without writing a report.")
         first = first or check

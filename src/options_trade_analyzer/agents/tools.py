@@ -12,6 +12,7 @@ from langchain_core.tools import BaseTool, tool
 from options_trade_analyzer import config
 from options_trade_analyzer.analytics import data_quality, options_math, strategies
 from options_trade_analyzer.analytics.strategies import Leg
+from options_trade_analyzer.agents import tot_search
 from options_trade_analyzer.data import get_provider
 from options_trade_analyzer.retrieval.knowledge import search_knowledge
 from options_trade_analyzer.retrieval.news import search_news
@@ -158,6 +159,22 @@ def compare_strategies(ticker: str, option_type: str, strike: float, expiration:
 
 
 @tool
+def search_alternatives(ticker: str, option_type: str, strike: float, expiration: str) -> str:
+    """Tree-of-Thought search for a lower-risk alternative to the requested long option. Tries
+    strategy families (vertical spreads, a cheaper strike), then strikes, then expirations; scores
+    every candidate out of 100 in Python (risk reduction, breakeven distance, chance beyond breakeven,
+    volatility-drop exposure, liquidity), prunes weak ones, and returns the best position and a
+    runner-up with cost, maximum loss and gain, breakevens and payoffs."""
+    if option_type not in ("call", "put"):
+        return _json({"error": "option_type must be 'call' or 'put'"})
+    if expiration not in provider.get_expirations(ticker):
+        return _json({"error": f"no {ticker} options expire on {expiration}"})
+    earnings = provider.get_next_earnings_date(ticker)
+    return _json(tot_search.search(provider, ticker, option_type, strike, expiration,
+                                   earnings.isoformat() if earnings else None))
+
+
+@tool
 def get_earnings_date(ticker: str) -> str:
     """Next scheduled earnings date for the ticker, if known."""
     date = provider.get_next_earnings_date(ticker)
@@ -191,3 +208,4 @@ def search_recent_news(ticker: str, query: str) -> str:
 
 CORE_TOOLS: list[BaseTool] = [get_option_contract, compute_greeks, get_earnings_date, compare_strategies]
 RETRIEVAL_TOOLS: list[BaseTool] = [search_options_knowledge, search_recent_news]
+TOT_TOOLS: list[BaseTool] = [get_option_contract, compute_greeks, get_earnings_date, search_alternatives]

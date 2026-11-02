@@ -18,6 +18,7 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
 DATA_PROVIDER = os.getenv("DATA_PROVIDER", "yfinance").lower()
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
 RISK_FREE_RATE = float(os.getenv("RISK_FREE_RATE", "0.04"))
+TOT_PROPOSER = os.getenv("TOT_PROPOSER", "llm").lower()  # "rules" skips the LLM in the alternative search
 
 
 def get_embeddings() -> Embeddings:
@@ -27,10 +28,12 @@ def get_embeddings() -> Embeddings:
     return OllamaEmbeddings(model=EMBEDDING_MODEL)
 
 
-def get_llm(provider: str | None = None) -> BaseChatModel:
+def get_llm(provider: str | None = None, reasoning: bool = True) -> BaseChatModel:
     """Return the chat model for the configured provider.
 
     Switching between local Ollama and the Claude API is a one-line change in .env.
+    reasoning=False turns qwen3 thinking off, for short structured replies such as the ToT menu picks
+    (minutes faster per call); the Claude model is unaffected.
     """
     provider = (provider or LLM_PROVIDER).lower()
     if provider == "ollama":
@@ -39,7 +42,7 @@ def get_llm(provider: str | None = None) -> BaseChatModel:
         # temperature 0 for repeatable runs; qwen3 thinking stays on (kept out of the reply) for reliable
         # tool calls; Ollama's default 4096-token context truncates agent traces, so raise it.
         # The timeout stops a dropped connection (e.g. after the Mac sleeps) from hanging a run forever.
-        return ChatOllama(model=OLLAMA_MODEL, temperature=0, reasoning=True, num_ctx=16384,
+        return ChatOllama(model=OLLAMA_MODEL, temperature=0, reasoning=reasoning, num_ctx=16384,
                           client_kwargs={"timeout": 600})
     if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic

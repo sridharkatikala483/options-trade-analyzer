@@ -40,13 +40,15 @@ src/options_trade_analyzer/
   analytics/options_math.py             Black-Scholes price, Greeks, breakeven, payoff (via vollib)
   analytics/data_quality.py             quote freshness, liquidity rating, model-vs-market gap, assumption flags
   analytics/strategies.py               multi-leg payoff math (Leg, max loss/gain, breakevens) for comparisons
+  analytics/alternatives.py             ToT candidates: build, score out of 100, prune, rank (deterministic)
   retrieval/vector_index.py             numpy vector index: cosine search, similarity floor, MMR
   retrieval/knowledge.py                knowledge-base chunking + cached index (data/index/, gitignored)
   retrieval/news.py                     per-request headline index with MMR and 14-day cutoff
   agents/tools.py                       LangChain tools (contract + data_quality, Greeks, earnings date,
-                                        compare_strategies, 2 retrieval tools)
+                                        compare_strategies, search_alternatives, 2 retrieval tools)
+  agents/tot_search.py                  Tree-of-Thought beam search (LangGraph loop, LLM or rule proposer)
   agents/options_agent.py               Options Analysis ReAct agent; analyze_contract(..., use_retrieval,
-                                        verify_report) with up to 2 verification-driven revisions
+                                        verify_report, use_tot) with up to 2 verification-driven revisions
   agents/verifier.py                    rule-based report checks: tool completeness, numbers, dates,
                                         liquidity wording, citations, no advice
 scripts/check_setup.py                  environment smoke test (exits 1 on failure)
@@ -54,6 +56,7 @@ tests/test_options_math.py              textbook-value tests for the math
 tests/test_reliability.py               independent Black-Scholes cross-check, data-quality and strategy tests
 tests/test_retrieval.py                 offline chunking, search, similarity floor and MMR tests
 tests/test_verifier.py                  verifier catches the real flawed run and passes a faithful report
+tests/test_tot.py                       ToT search on a synthetic Black-Scholes chain (scoring, pruning, beam)
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
 scripts/evaluate.py                     10 contracts x 3 setups, resumable -> docs/evaluation/ (hours on local qwen3)
 data/knowledge/                         synthetic options-education notes (the RAG corpus)
@@ -89,7 +92,11 @@ Key seams to keep intact:
   then mark low confidence, per DESIGN.md).
 - On local `qwen3:8b`, keep `reasoning=True` and `num_ctx=16384`: with thinking off it often stops early with an empty
   reply, and Ollama's default 4096-token context silently truncates the trace. One run takes minutes.
+  Exception: the ToT proposer uses `get_llm(reasoning=False)` for its short menu picks (~7 s per call instead
+  of ~6 min); an empty reply there just falls back to the default choices.
 - yfinance `.news` currently returns nothing; headlines come from RSS in `data/news.py` instead.
+- `TOT_PROPOSER=rules` runs the alternative search without LLM calls (default `llm`); off-menu or
+  unparseable proposals fall back to the default choices and are counted in the tool output.
 - `FINNHUB_API_KEY` and the Schwab keys are defined in `.env.example` but not used by code yet.
 - Tests should be deterministic and offline (no network, no LLM). Use `data/snapshots/` for market data.
 - Never commit `.env`, `data/history.db` (planned SQLite long-term memory), or `.streamlit/secrets.toml`.
@@ -97,6 +104,6 @@ Key seams to keep intact:
 
 ## Planned next steps (from DESIGN.md)
 
-Remaining specialists → LangGraph orchestration with shared state and an
+Evaluate the ToT alternative search → remaining specialists → LangGraph orchestration with shared state and an
 LLM Critic on top of the rule-based verifier → SQLite memory → report in the dashboard → evaluation harness
 (scenarios with answer keys, run with and without the Critic).
