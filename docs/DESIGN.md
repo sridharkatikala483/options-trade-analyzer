@@ -274,8 +274,11 @@ checks that score it, so its first-draft scores are reported too, and reports ar
 - [x] Options Analysis agent end to end (`agents/options_agent.py`, LangGraph ReAct)
 - [x] Retrieval layer: knowledge base + news with MMR (Checkpoint 3)
 - [x] Data-quality checks and strategy comparison tool (Checkpoint 2 feedback)
-- [ ] Stock, News and Sentiment, Risk agents
-- [ ] LangGraph orchestration with shared state, Critic, revision loop (max 2)
+- [x] Specialists split per the Checkpoint 5 design (`agents/team.py`): Options Analyst, Market Context
+      (+ `get_price_trend`, `analytics/trend.py`), Risk Strategist, Writer; coordinator in code
+- [x] LangGraph orchestration: shared state, parallel specialists + join, rule-based Critic, fixes routed
+      to the owning agent, revision loop (max 2); `evaluate.py` setup `multi_agent`
+- [ ] LLM Critic (judgment review after the rule checks pass)
 - [x] Report-vs-tool consistency check + completeness check + revision loop (`agents/verifier.py`)
 - [x] Evaluation harness for retrieval and validation (`scripts/evaluate.py`)
 - [x] Run the full evaluation (10 contracts x 3 setups) and record results

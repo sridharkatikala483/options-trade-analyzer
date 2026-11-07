@@ -41,16 +41,20 @@ src/options_trade_analyzer/
   analytics/data_quality.py             quote freshness, liquidity rating, model-vs-market gap, assumption flags
   analytics/strategies.py               multi-leg payoff math (Leg, max loss/gain, breakevens) for comparisons
   analytics/alternatives.py             ToT candidates: build, score out of 100, prune, rank (deterministic)
+  analytics/trend.py                    price trend from daily closes (1m/3m change, 50-day average, range)
   analytics/risk_metrics.py             risk-adjusted measures: expected P/L (Black-Scholes and past moves),
                                         bid-ask cost, IV shifts, max gain per $ risked
   retrieval/vector_index.py             numpy vector index: cosine search, similarity floor, MMR
   retrieval/knowledge.py                knowledge-base chunking + cached index (data/index/, gitignored)
   retrieval/news.py                     per-request headline index with MMR and 14-day cutoff
   agents/tools.py                       LangChain tools (contract + data_quality, Greeks, earnings date,
-                                        compare_strategies, search_alternatives, 2 retrieval tools)
+                                        compare_strategies, search_alternatives, price trend, 2 retrieval tools)
   agents/tot_search.py                  Tree-of-Thought beam search (LangGraph loop, LLM or rule proposer)
   agents/options_agent.py               Options Analysis ReAct agent; analyze_contract(..., use_retrieval,
                                         verify_report, use_tot) with up to 2 verification-driven revisions
+  agents/team.py                        Checkpoint 5 multi-agent graph: coordinator (code), Options Analyst +
+                                        Market Context in parallel, Risk Strategist, Writer, rule-based Critic
+                                        routing fixes to the owning agent; analyze_contract_team(...)
   agents/verifier.py                    rule-based report checks: tool completeness, numbers, dates,
                                         liquidity wording, citations, no advice
 scripts/check_setup.py                  environment smoke test (exits 1 on failure)
@@ -59,6 +63,7 @@ tests/test_reliability.py               independent Black-Scholes cross-check, d
 tests/test_retrieval.py                 offline chunking, search, similarity floor and MMR tests
 tests/test_verifier.py                  verifier catches the real flawed run and passes a faithful report
 tests/test_tot.py                       ToT search on a synthetic Black-Scholes chain (scoring, pruning, beam)
+tests/test_team.py                      team wiring with stand-in LLM calls: join, routing, failures, stop
 tests/test_risk_metrics.py              risk-adjusted measures on the same synthetic chain
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
 scripts/evaluate.py                     10 contracts x 3 setups, resumable -> docs/evaluation/ (hours on local qwen3)
@@ -108,6 +113,5 @@ Key seams to keep intact:
 
 ## Planned next steps (from DESIGN.md)
 
-ToT report quality end to end → remaining specialists → LangGraph orchestration with shared state and an
-LLM Critic on top of the rule-based verifier → SQLite memory → report in the dashboard → evaluation harness
+LLM Critic on top of the rule-based verifier in the team graph → SQLite memory → report in the dashboard → evaluation harness
 (scenarios with answer keys, run with and without the Critic).

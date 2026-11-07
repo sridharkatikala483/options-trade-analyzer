@@ -10,7 +10,7 @@ import json
 from langchain_core.tools import BaseTool, tool
 
 from options_trade_analyzer import config
-from options_trade_analyzer.analytics import data_quality, options_math, strategies
+from options_trade_analyzer.analytics import data_quality, options_math, strategies, trend
 from options_trade_analyzer.analytics.strategies import Leg
 from options_trade_analyzer.agents import tot_search
 from options_trade_analyzer.data import get_provider
@@ -172,6 +172,17 @@ def search_alternatives(ticker: str, option_type: str, strike: float, expiration
     earnings = provider.get_next_earnings_date(ticker)
     return _json(tot_search.search(provider, ticker, option_type, strike, expiration,
                                    earnings.isoformat() if earnings else None))
+
+
+@tool
+def get_price_trend(ticker: str) -> str:
+    """Recent price trend of the stock from the last 6 months of daily closes: 1- and 3-month change
+    (%), 50-day average, 3-month high and low, and a trend label (up, down or sideways). Descriptive,
+    not a forecast."""
+    history = provider.get_price_history(ticker, "6mo")
+    if history.empty:
+        return _json({"error": f"no price history for {ticker}"})
+    return _json({"ticker": ticker, **trend.price_trend(history["Close"])})
 
 
 @tool

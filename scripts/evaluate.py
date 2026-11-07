@@ -8,6 +8,8 @@ Setups
   retrieval_verified  + retrieval, with the completeness/verification loop (max 2 revisions)
   retrieval_verified_tot  same, with the Tree-of-Thought alternative search instead of the fixed spread
                       (Checkpoint 4; run with --setups retrieval_verified,retrieval_verified_tot --out tot)
+  multi_agent         the Checkpoint 5 team (agents/team.py): coordinator, three specialists, Writer and
+                      rule-based Critic with fixes routed to the owning agent; ToT and retrieval on
 
 Metrics per run: tool-use completeness, unsupported numbers, date errors, liquidity contradictions
 (general guidance misapplied to this contract), citation accuracy, recommendations, revisions,
@@ -29,7 +31,8 @@ from datetime import date, datetime
 from options_trade_analyzer import config
 from options_trade_analyzer.agents import tools
 from options_trade_analyzer.agents.options_agent import analyze_contract
-from options_trade_analyzer.data import get_provider
+from options_trade_analyzer.agents.team import analyze_contract_team
+from options_trade_analyzer.data import CachingProvider, get_provider
 from options_trade_analyzer.retrieval import news as news_retrieval
 
 OUT_DIR = config.PROJECT_ROOT / "docs" / "evaluation"
@@ -46,22 +49,10 @@ SETUPS = {
     "retrieval": {"use_retrieval": True, "verify_report": False},
     "retrieval_verified": {"use_retrieval": True, "verify_report": True},
     "retrieval_verified_tot": {"use_retrieval": True, "verify_report": True, "use_tot": True},
+    "multi_agent": {"use_retrieval": True, "verify_report": True, "use_tot": True, "team": True},
 }
 METRICS = ["tool_completeness", "unsupported_numbers", "date_errors", "liquidity_contradictions",
            "invalid_citations", "citations", "recommendation"]
-
-
-class CachingProvider:
-    """Memoizes every provider call so all setups for a contract see identical market data."""
-
-    def __init__(self, inner):
-        self._inner = inner
-        self._cached = {}
-
-    def __getattr__(self, name):
-        if name not in self._cached:
-            self._cached[name] = functools.lru_cache(maxsize=None)(getattr(self._inner, name))
-        return self._cached[name]
 
 
 def resolve(provider, ticker: str, option_type: str, otm: float, days: int) -> dict:
@@ -77,7 +68,11 @@ def resolve(provider, ticker: str, option_type: str, otm: float, days: int) -> d
 
 def run_one(contract: dict, setup: str) -> dict:
     started = time.time()
-    result = analyze_contract(**contract, **SETUPS[setup])
+    options = SETUPS[setup]
+    if options.get("team"):
+        result = analyze_contract_team(**contract, use_tot=options["use_tot"])
+    else:
+        result = analyze_contract(**contract, **options)
     return {
         "contract": contract,
         "setup": setup,
@@ -89,6 +84,8 @@ def run_one(contract: dict, setup: str) -> dict:
         "first_draft": result.first_draft_verification.metrics,
         "report": result.report,
         "trace": result.trace,
+        "findings": result.findings,
+        "routing": result.routing,
     }
 
 

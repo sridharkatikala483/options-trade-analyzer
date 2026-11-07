@@ -73,6 +73,8 @@ class AnalysisResult:
     first_draft_verification: Verification | None = None  # checks before any revision
     revisions: int = 0
     tokens: dict = field(default_factory=lambda: {"input": 0, "output": 0})
+    findings: dict = field(default_factory=dict)  # multi-agent runs: each agent's final findings
+    routing: list[dict] = field(default_factory=list)  # multi-agent runs: which agent got which fix
 
 
 def build_agent(use_retrieval: bool = True, use_tot: bool = False):
