@@ -9,7 +9,8 @@ Setups
   retrieval_verified_tot  same, with the Tree-of-Thought alternative search instead of the fixed spread
                       (Checkpoint 4; run with --setups retrieval_verified,retrieval_verified_tot --out tot)
   multi_agent         the Checkpoint 5 team (agents/team.py): coordinator, three specialists, Writer and
-                      rule-based Critic with fixes routed to the owning agent; ToT and retrieval on
+                      Critic (rules, then an LLM judgment review) with fixes routed to the owning agent
+  multi_agent_rules   the same team with the rule-based Critic only (no LLM judgment review)
 
 Metrics per run: tool-use completeness, unsupported numbers, date errors, liquidity contradictions
 (general guidance misapplied to this contract), citation accuracy, recommendations, revisions,
@@ -50,6 +51,8 @@ SETUPS = {
     "retrieval_verified": {"use_retrieval": True, "verify_report": True},
     "retrieval_verified_tot": {"use_retrieval": True, "verify_report": True, "use_tot": True},
     "multi_agent": {"use_retrieval": True, "verify_report": True, "use_tot": True, "team": True},
+    "multi_agent_rules": {"use_retrieval": True, "verify_report": True, "use_tot": True, "team": True,
+                          "llm_critic": False},
 }
 METRICS = ["tool_completeness", "unsupported_numbers", "date_errors", "liquidity_contradictions",
            "invalid_citations", "citations", "recommendation"]
@@ -70,7 +73,8 @@ def run_one(contract: dict, setup: str) -> dict:
     started = time.time()
     options = SETUPS[setup]
     if options.get("team"):
-        result = analyze_contract_team(**contract, use_tot=options["use_tot"])
+        result = analyze_contract_team(**contract, use_tot=options["use_tot"],
+                                       use_llm_critic=options.get("llm_critic", True))
     else:
         result = analyze_contract(**contract, **options)
     return {
@@ -89,6 +93,12 @@ def run_one(contract: dict, setup: str) -> dict:
     }
 
 
+def critic_cell(metrics: list[dict]) -> str:
+    """Judgment issues the LLM Critic raised, over the runs where it ran (it waits for the rules to pass)."""
+    ran = [x for x in metrics if x.get("llm_critic_ran")]
+    return f"{sum(x['judgment_issues'] for x in ran)} in {len(ran)} reviews" if ran else "—"
+
+
 def summarize(runs: list[dict]) -> str:
     lines = [
         "# Evaluation results", "",
@@ -98,8 +108,9 @@ def summarize(runs: list[dict]) -> str:
         "setup is also *revised* by the same verifier, so its final scores show what the loop achieves;",
         "its first-draft scores show the agent before verification.", "",
         "| Setup | Runs | Tool completeness | Unsupported numbers | Date errors | Liquidity contradictions "
-        "| Citation accuracy | Recommendations | Avg revisions | Avg seconds | Avg tokens (in/out) |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Citation accuracy | Recommendations | Judgment issues (LLM Critic) | Avg revisions | Avg seconds "
+        "| Avg tokens (in/out) |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for setup in SETUPS:
         for stage in (["first_draft", "final"] if SETUPS[setup]["verify_report"] else ["final"]):
@@ -116,6 +127,7 @@ def summarize(runs: list[dict]) -> str:
                 f"| {sum(x['liquidity_contradictions'] for x in m)} "
                 f"| {f'{1 - bad / cites:.0%} of {cites}' if cites else 'n/a'} "
                 f"| {sum(bool(x['recommendation']) for x in m)} "
+                f"| {critic_cell(m)} "
                 f"| {sum(r['revisions'] for r in rs) / len(rs):.1f} | {sum(r['seconds'] for r in rs) / len(rs):.0f} "
                 f"| {sum(r['tokens']['input'] for r in rs) // len(rs)} / {sum(r['tokens']['output'] for r in rs) // len(rs)} |")
     lines += ["", "## Per run", "", "| Contract | Setup | Completeness | Unsupported numbers | Date errors "

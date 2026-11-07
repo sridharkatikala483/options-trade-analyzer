@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 from options_trade_analyzer.agents import team, tools
+from options_trade_analyzer.agents.critic import Judgment
 from options_trade_analyzer.analytics.trend import price_trend
 
 REQUEST = {"ticker": "TEST", "option_type": "call", "strike": 105.0, "expiration": "2026-12-04"}
@@ -24,9 +25,11 @@ def obs(agent, tool, result):
 class Script:
     """Stand-in for the LLM calls; records every call so tests can check order and routing."""
 
-    def __init__(self, earnings="2027-01-27", skip_news_first=False, fail=(), reports=(GOOD_REPORT,)):
+    def __init__(self, earnings="2027-01-27", skip_news_first=False, fail=(), reports=(GOOD_REPORT,),
+                 judgments=()):
         self.calls, self.earnings, self.skip_news_first, self.fail = [], earnings, skip_news_first, set(fail)
         self.reports, self.writer_inputs = list(reports), []
+        self.judgments = list(judgments)  # one list of Judgments per LLM Critic call; then none
 
     def run_agent(self, name, prompt, agent_tools, messages):
         self.calls.append(name)
@@ -42,6 +45,10 @@ class Script:
             "risk_strategist": [obs(name, "search_alternatives", {"outcome": "alternative found"})],
         }[name]
         return team.AgentRun(name, messages + ["(reply)"], f"{name} findings", trace, {"input": 10, "output": 2})
+
+    def llm_review(self, context, report):
+        self.calls.append("llm_critic")
+        return (self.judgments.pop(0) if self.judgments else []), None, {"input": 7, "output": 1}
 
     def write_report(self, messages):
         self.calls.append("writer")
@@ -63,23 +70,24 @@ def script(monkeypatch):
         s = Script(**kwargs)
         monkeypatch.setattr(team, "run_agent", s.run_agent)
         monkeypatch.setattr(team, "write_report", s.write_report)
+        monkeypatch.setattr(team, "llm_review", s.llm_review)
         monkeypatch.setattr(tools, "get_option_contract", FakeContractTool(CONTRACT))
         return s
     return install
 
 
-def run():
-    return team.analyze_contract_team(**REQUEST)
+def run(**kwargs):
+    return team.analyze_contract_team(**REQUEST, **kwargs)
 
 
 def test_specialists_run_in_parallel_then_risk_writer_critic(script):
     s = script()
     result = run()
     assert set(s.calls[:2]) == {"options_analyst", "market_context"}  # both before the join
-    assert s.calls[2:] == ["risk_strategist", "writer"]
+    assert s.calls[2:] == ["risk_strategist", "writer", "llm_critic"]
     assert result.verification.passed and result.revisions == 0
     assert set(result.findings) == set(team.SPECIALISTS)
-    assert result.tokens == {"input": 35, "output": 11}
+    assert result.tokens == {"input": 42, "output": 12}
     assert {step.get("agent") for step in result.trace} >= {"coordinator", *team.SPECIALISTS, "writer"}
 
 
@@ -144,3 +152,36 @@ def test_price_trend():
     flat = price_trend(pd.Series([50.0] * 120))
     assert flat["trend"] == "sideways" and flat["change_3m_pct"] == 0.0 and flat["high_3m"] == 50.0
     assert "error" in price_trend(pd.Series([50.0] * 10))
+
+
+def test_the_llm_critic_runs_only_after_the_rules_pass(script):
+    s = script(reports=("Summary: the premium is $9.99.", GOOD_REPORT))
+    run()
+    assert s.calls.index("llm_critic") > s.calls.index("writer", s.calls.index("writer") + 1)
+    assert s.calls.count("llm_critic") == 1  # not on the draft that failed the rules
+
+
+def test_a_judgment_problem_goes_to_the_agent_the_critic_names(script):
+    flagged = [Judgment("risk_strategist", "The alternative expires Dec 18, not Dec 4, and the findings omit it.")]
+    s = script(judgments=[flagged])
+    result = run()
+    assert result.first_draft_verification.metrics["judgment_issues"] == 1
+    assert result.routing[0]["agent"] == "risk_strategist"
+    assert result.routing[0]["issues"][0].startswith("Judgment issue for risk_strategist:")
+    assert s.calls.count("risk_strategist") == 2 and s.calls.count("writer") == 2
+    assert result.verification.passed and result.revisions == 1
+
+
+def test_the_llm_critic_can_be_switched_off(script):
+    s = script(judgments=[[Judgment("writer", "would have been flagged")]])
+    result = run(use_llm_critic=False)
+    assert "llm_critic" not in s.calls and result.verification.passed
+    assert result.verification.metrics["llm_critic_ran"] is False
+
+
+def test_a_critic_that_never_agrees_still_stops_at_the_cap(script):
+    always = [[Judgment("writer", "still unclear")]] * 5
+    s = script(judgments=always)
+    result = run()
+    assert result.revisions == team.MAX_REVISIONS and s.calls.count("llm_critic") == team.MAX_REVISIONS + 1
+    assert not result.verification.passed

@@ -11,8 +11,10 @@ agents, a Writer and a rule-based Critic, wired as a LangGraph graph over one sh
   volatility-drop scenario needs the earnings date and the implied volatility.
 - Specialists hand on findings: short claims, each tagged with the tool it came from, plus their
   tool outputs as evidence. The Writer sees only those, never the tools.
-- The Critic is the rule-based verifier over every agent's tool calls. Each issue is routed to the
-  agent that owns it (a missing tool to its specialist, an unsupported number to the Writer).
+- The Critic has two stages: the rule-based verifier over every agent's tool calls, then, only once
+  the rules pass, an LLM review for judgment (agents/critic.py). Each issue is routed to the agent
+  that owns it (a missing tool to its specialist, an unsupported number to the Writer, a judgment
+  problem to the agent the LLM Critic names).
 - A specialist that fails is recorded and skipped; the Writer is told what is missing.
 """
 
@@ -27,6 +29,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import create_react_agent
 
 from options_trade_analyzer import config
+from options_trade_analyzer.agents import critic as llm_critic
 from options_trade_analyzer.agents import tools
 from options_trade_analyzer.agents.options_agent import (MAX_REVISIONS, MAX_STEPS, AnalysisResult,
                                                          _token_usage, to_trace)
@@ -123,6 +126,7 @@ class TeamState(TypedDict, total=False):
     writer_messages: list
     writer_tokens: dict
     writer_feedback: list[str]
+    critic_tokens: dict
     checks: Annotated[list, operator.add]  # one Verification per Critic round
     routing: Annotated[list, operator.add]
     revisions: int
@@ -148,6 +152,15 @@ def write_report(messages: list) -> tuple[str, dict]:
     return str(reply.content).strip(), _token_usage([reply])
 
 
+def llm_review(context: str, report: str) -> tuple[list, str | None, dict]:
+    """The LLM Critic; a failed call counts as no judgment issues, recorded as an error."""
+    try:
+        judgments, error, reply = llm_critic.review(config.get_llm(), context, report)
+    except Exception as exc:  # noqa: BLE001 - the rule checks already passed; do not lose the report
+        return [], f"{type(exc).__name__}: {exc}", {"input": 0, "output": 0}
+    return judgments, error, _token_usage([reply])
+
+
 # --- routing ---
 
 def route(issues: list[str]) -> dict[str, list[str]]:
@@ -155,7 +168,9 @@ def route(issues: list[str]) -> dict[str, list[str]]:
     routed: dict[str, list[str]] = {}
     for issue in issues:
         owner = "writer"
-        if m := re.match(r"Required tool not called: (.+)\.$", issue):
+        if m := llm_critic.JUDGMENT_ISSUE.match(issue):
+            owner = m.group(1)
+        elif m := re.match(r"Required tool not called: (.+)\.$", issue):
             owner = OWNERS.get(m.group(1), "writer")
         elif m := re.match(r"(\w+) was called with", issue):
             owner = OWNERS.get(m.group(1), "writer")
@@ -196,8 +211,10 @@ def _earnings_line(market: AgentRun | None, expiration: str) -> tuple[str, bool]
 
 
 class Team:
-    def __init__(self, request: dict, use_tot: bool = True, max_revisions: int = MAX_REVISIONS):
+    def __init__(self, request: dict, use_tot: bool = True, max_revisions: int = MAX_REVISIONS,
+                 use_llm_critic: bool = True):
         self.request, self.use_tot, self.max_revisions = request, use_tot, max_revisions
+        self.use_llm_critic = use_llm_critic
 
     @property
     def task(self) -> str:
@@ -281,7 +298,16 @@ class Team:
                        use_retrieval=True, use_tot=self.use_tot)
         if not state.get("report"):
             check.issues.insert(0, "The Writer finished without a report.")
-        return {"checks": [check]}
+        update, judgments, error = {}, [], None
+        ran = check.passed and self.use_llm_critic  # judgment only once the cheap, exact checks pass
+        if ran:
+            judgments, error, tokens = llm_review(self._writer_input(state), state["report"])
+            check.issues += [j.as_issue() for j in judgments]
+            total = state.get("critic_tokens") or {"input": 0, "output": 0}
+            update["critic_tokens"] = {k: total[k] + tokens.get(k, 0) for k in total}
+        check.metrics = check.metrics | {"llm_critic_ran": ran, "judgment_issues": len(judgments),
+                                         "llm_critic_error": error}
+        return update | {"checks": [check]}
 
     def revise(self, state: TeamState) -> dict:
         routed = route(state["checks"][-1].issues)
@@ -346,7 +372,8 @@ class Team:
     def result(self, state: TeamState) -> AnalysisResult:
         runs = state.get("runs", {})
         tokens = {"input": 0, "output": 0}
-        for usage in [r.tokens for r in runs.values()] + [state.get("writer_tokens") or {}]:
+        for usage in [r.tokens for r in runs.values()] + [state.get("writer_tokens") or {},
+                                                           state.get("critic_tokens") or {}]:
             for k in tokens:
                 tokens[k] += usage.get(k, 0)
         checks = state.get("checks") or [Verification(issues=[state.get("error", "no report")])]
@@ -364,10 +391,11 @@ class Team:
 
 
 def analyze_contract_team(ticker: str, option_type: str, strike: float, expiration: str,
-                          use_tot: bool = True, max_revisions: int = MAX_REVISIONS) -> AnalysisResult:
+                          use_tot: bool = True, max_revisions: int = MAX_REVISIONS,
+                          use_llm_critic: bool = True) -> AnalysisResult:
     """Run the multi-agent team on one contract. Market data is frozen for the run."""
     request = {"ticker": ticker, "option_type": option_type, "strike": strike, "expiration": expiration}
-    team = Team(request, use_tot, max_revisions)
+    team = Team(request, use_tot, max_revisions, use_llm_critic)
     previous = tools.provider
     tools.provider = CachingProvider(previous)  # one snapshot: every agent sees the same prices
     try:

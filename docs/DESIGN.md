@@ -278,7 +278,11 @@ checks that score it, so its first-draft scores are reported too, and reports ar
       (+ `get_price_trend`, `analytics/trend.py`), Risk Strategist, Writer; coordinator in code
 - [x] LangGraph orchestration: shared state, parallel specialists + join, rule-based Critic, fixes routed
       to the owning agent, revision loop (max 2); `evaluate.py` setup `multi_agent`
-- [ ] LLM Critic (judgment review after the rule checks pass)
+- [x] LLM Critic (`agents/critic.py`): judgment review with a 7-point checklist, only after the rule checks
+      pass; names the owning agent; unreadable replies count as no issues. On the trial report it found a
+      misused number the rules missed (a 13.8 score figure presented as the volatility-drop reduction;
+      the evidence shows -313.59 -> -25.56). qwen3 thinking stays on (9.4 min; thinking off: 24 s but a
+      wrong review). `evaluate.py` setups `multi_agent` (with) vs `multi_agent_rules` (without)
 - [x] Report-vs-tool consistency check + completeness check + revision loop (`agents/verifier.py`)
 - [x] Evaluation harness for retrieval and validation (`scripts/evaluate.py`)
 - [x] Run the full evaluation (10 contracts x 3 setups) and record results

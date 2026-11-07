@@ -55,6 +55,7 @@ src/options_trade_analyzer/
   agents/team.py                        Checkpoint 5 multi-agent graph: coordinator (code), Options Analyst +
                                         Market Context in parallel, Risk Strategist, Writer, rule-based Critic
                                         routing fixes to the owning agent; analyze_contract_team(...)
+  agents/critic.py                      LLM Critic: judgment checklist after the rules pass; JSON reply names the owner
   agents/verifier.py                    rule-based report checks: tool completeness, numbers, dates,
                                         liquidity wording, citations, no advice
 scripts/check_setup.py                  environment smoke test (exits 1 on failure)
@@ -63,6 +64,7 @@ tests/test_reliability.py               independent Black-Scholes cross-check, d
 tests/test_retrieval.py                 offline chunking, search, similarity floor and MMR tests
 tests/test_verifier.py                  verifier catches the real flawed run and passes a faithful report
 tests/test_tot.py                       ToT search on a synthetic Black-Scholes chain (scoring, pruning, beam)
+tests/test_critic.py                    LLM Critic reply parsing (owners, failures, cap) with a stand-in LLM
 tests/test_team.py                      team wiring with stand-in LLM calls: join, routing, failures, stop
 tests/test_risk_metrics.py              risk-adjusted measures on the same synthetic chain
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
@@ -113,5 +115,5 @@ Key seams to keep intact:
 
 ## Planned next steps (from DESIGN.md)
 
-LLM Critic on top of the rule-based verifier in the team graph → SQLite memory → report in the dashboard → evaluation harness
+Snapshots for repeatable runs → evaluate single agent vs team, with and without the LLM Critic → SQLite memory → report in the dashboard → evaluation harness
 (scenarios with answer keys, run with and without the Critic).
