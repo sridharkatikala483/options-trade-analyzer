@@ -41,6 +41,8 @@ src/options_trade_analyzer/
   analytics/data_quality.py             quote freshness, liquidity rating, model-vs-market gap, assumption flags
   analytics/strategies.py               multi-leg payoff math (Leg, max loss/gain, breakevens) for comparisons
   analytics/alternatives.py             ToT candidates: build, score out of 100, prune, rank (deterministic)
+  analytics/risk_metrics.py             risk-adjusted measures: expected P/L (Black-Scholes and past moves),
+                                        bid-ask cost, IV shifts, max gain per $ risked
   retrieval/vector_index.py             numpy vector index: cosine search, similarity floor, MMR
   retrieval/knowledge.py                knowledge-base chunking + cached index (data/index/, gitignored)
   retrieval/news.py                     per-request headline index with MMR and 14-day cutoff
@@ -57,9 +59,10 @@ tests/test_reliability.py               independent Black-Scholes cross-check, d
 tests/test_retrieval.py                 offline chunking, search, similarity floor and MMR tests
 tests/test_verifier.py                  verifier catches the real flawed run and passes a faithful report
 tests/test_tot.py                       ToT search on a synthetic Black-Scholes chain (scoring, pruning, beam)
+tests/test_risk_metrics.py              risk-adjusted measures on the same synthetic chain
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
 scripts/evaluate.py                     10 contracts x 3 setups, resumable -> docs/evaluation/ (hours on local qwen3)
-scripts/evaluate_tot.py                 ToT vs fixed spread vs exhaustive on the same contracts -> docs/evaluation/tot_summary.md
+scripts/evaluate_tot.py                 ToT vs fixed spread vs exhaustive, plus risk-adjusted measures -> docs/evaluation/tot_summary*.md
 data/knowledge/                         synthetic options-education notes (the RAG corpus)
 data/snapshots/                         saved market data for repeatable evaluation scenarios
 ```

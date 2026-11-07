@@ -2,8 +2,9 @@
 
 Deterministic Python on top of the payoff and data-quality code, like the ToT lab's solve24(): the
 search controller (agents/tot_search.py) decides which candidates to try, this module prices and
-judges them. Weights and thresholds follow the Checkpoint 4 design. Prices are mid-quotes;
-probabilities are Black-Scholes (risk-neutral) estimates, not forecasts.
+judges them. Weights and thresholds follow the Checkpoint 4 design. Prices are mid-quotes, except that
+risk reduction counts the bid-ask cost of opening each position (Checkpoint 4 feedback); probabilities
+are Black-Scholes (risk-neutral) estimates, not forecasts.
 """
 
 import datetime as dt
@@ -22,6 +23,8 @@ OptionType = Literal["call", "put"]
 WEIGHTS = {"risk_reduction": 30, "breakeven_distance": 25, "chance_beyond_breakeven": 20,
            "volatility_drop": 15, "liquidity": 10}
 MIN_SCORE = 40           # complete or partial nodes below this are pruned
+MIN_CHANCE = 0.15        # a lower chance of finishing beyond breakeven is a lottery ticket, not lower risk
+COUNT_BID_ASK = True     # risk reduction includes the bid-ask cost to open (False: Checkpoint 4 scoring)
 TIE_POINTS = 2           # scores this close are ties, broken by max loss, liquidity, then fewer legs
 IV_DROP_PCT = -40        # the post-earnings volatility-drop scenario
 BREAKEVEN_ZERO_PCT = 10  # a breakeven this far (%) beyond the stock price earns no breakeven points
@@ -180,6 +183,7 @@ class Evaluation:
     breakeven_distance_pct: float | None
     chance_beyond_breakeven: float
     iv_drop_change: float  # dollars the position gains (+) or loses (-) if implied volatility drops 40%
+    open_cost: float = 0.0  # dollars lost to the bid-ask spread when opening
 
     def summary(self, market: Market) -> dict:
         """The numbers the report may use, in the same shape as compare_strategies."""
@@ -192,6 +196,7 @@ class Evaluation:
             "chance_beyond_breakeven_pct": round(self.chance_beyond_breakeven * 100, 1),
             "value_change_if_iv_drops_40pct": self.iv_drop_change,
             "liquidity": self.position.worst_liquidity,
+            "bid_ask_cost_to_open": self.open_cost,
             "score": self.score,
             "points": self.points,
         })
@@ -200,22 +205,39 @@ class Evaluation:
         return data
 
 
+def open_cost(position: Position, market: Market) -> float:
+    """Dollars paid to the bid-ask spread to open the position: half the spread on every leg."""
+    cost = 0.0
+    for leg in position.legs:
+        quote = market.quotes(position.expiration, leg.option_type)[leg.strike]
+        cost += (quote.ask - quote.bid) / 2 * abs(leg.quantity) * 100
+    return round(cost, 2)
+
+
 def _model_value(position: Position, spot: float, years: float, rate: float, iv_scale: float) -> float:
     return sum(leg.quantity * options_math.bs_price(leg.option_type, spot, leg.strike, years, rate, iv * iv_scale)
                for leg, iv in zip(position.legs, position.ivs)) * 100
 
 
-def iv_drop_change(position: Position, market: Market) -> float:
+def iv_change(position: Position, market: Market, pct: float) -> float:
+    """Dollars the position gains (+) or loses (-) if every leg's implied volatility moves by pct %."""
     years = years_to_expiry(position.expiration, market.today)
     now = _model_value(position, market.spot, years, market.rate, 1.0)
-    dropped = _model_value(position, market.spot, years, market.rate, 1 + IV_DROP_PCT / 100)
-    return round(float(dropped - now), 2)
+    shifted = _model_value(position, market.spot, years, market.rate, 1 + pct / 100)
+    return round(float(shifted - now), 2)
+
+
+def iv_drop_change(position: Position, market: Market) -> float:
+    return iv_change(position, market, IV_DROP_PCT)
 
 
 def evaluate(position: Position, baseline: Position, market: Market, bullish: bool) -> Evaluation:
     """Score a position out of 100 against the user's original contract and decide whether to prune it."""
     legs, spot = list(position.legs), market.spot
     loss, base_loss = strategies.max_loss(legs), strategies.max_loss(list(baseline.legs))
+    cost, base_cost = open_cost(position, market), open_cost(baseline, market)
+    # risk compared at the prices actually paid: maximum loss at mid plus the bid-ask cost to open
+    paid_loss, base_paid_loss = (loss + cost, base_loss + base_cost) if COUNT_BID_ASK else (loss, base_loss)
     breakevens = strategies.breakevens(legs)
     breakeven = (min(breakevens) if bullish else max(breakevens)) if breakevens else None
 
@@ -235,7 +257,7 @@ def evaluate(position: Position, baseline: Position, market: Market, bullish: bo
     else:
         near = 1.0 if distance <= 0 else max(0.0, 1 - distance / BREAKEVEN_ZERO_PCT)
     fractions = {
-        "risk_reduction": max(0.0, min(1.0, (base_loss - loss) / base_loss)) if base_loss else 0.0,
+        "risk_reduction": max(0.0, min(1.0, (base_paid_loss - paid_loss) / base_paid_loss)) if base_paid_loss else 0.0,
         "breakeven_distance": near,
         "chance_beyond_breakeven": chance,
         "volatility_drop": exposure,
@@ -248,11 +270,13 @@ def evaluate(position: Position, baseline: Position, market: Market, bullish: bo
         pruned = "a leg has poor liquidity"
     elif loss >= base_loss - 0.005:
         pruned = "maximum loss is not lower than the original"
+    elif chance < MIN_CHANCE:
+        pruned = f"chance beyond breakeven below {MIN_CHANCE:.0%}"
     elif score < MIN_SCORE:
         pruned = f"score below {MIN_SCORE}"
     else:
         pruned = None
-    return Evaluation(position, score, points, pruned, loss, breakeven, distance, float(chance), change)
+    return Evaluation(position, score, points, pruned, loss, breakeven, distance, float(chance), change, cost)
 
 
 def rank(evaluations: list[Evaluation]) -> list[Evaluation]:

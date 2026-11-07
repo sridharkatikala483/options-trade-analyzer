@@ -26,16 +26,25 @@ instructor's feedback. Update this file when the design changes.
 
 ## Agents
 
+Revised in Checkpoint 5 (multi-agent architecture): five LLM agents plus a Coordinator in plain code.
+Stock Analysis merged into Market Context (trend takes 1-2 tool calls and answers the same question as the
+news); the Orchestrator became code (its decisions are fixed rules); a Writer was split from the Critic.
+
 | Agent | Responsibility | Tools |
 | --- | --- | --- |
-| Orchestrator | Validates input, loads market data, assigns work, merges results | none |
-| Stock Analysis | Price trend, recent performance, key price levels | price history lookup, technical indicators |
-| Options Analysis | Premium, liquidity (volume, open interest, bid-ask spread), implied volatility, Greeks | option chain lookup, Greeks calculator |
-| News and Sentiment | Earnings dates, catalysts, headline tone | news search (Finnhub), earnings calendar |
-| Risk Analysis | Max loss, breakeven, time decay, volatility exposure, alternatives | payoff calculator, strategy comparison |
-| Critic | Tests assumptions, flags weak or conflicting findings | reads all agents' findings |
+| Coordinator (code) | Validates input, loads one market snapshot for all agents, routing, round limits, failover | data provider (retry, fallback) |
+| Options Analyst | Price vs model, Greeks, liquidity, quote freshness, implied volatility | contract + data-quality tool, Greeks calculator, knowledge search |
+| Market Context | Trend, key levels, earnings date, recent headlines | price history, earnings calendar, news search, knowledge search |
+| Risk Strategist | Max loss, breakeven, volatility-drop scenario, lower-risk alternative | payoff calculator, ToT alternative search, risk-adjusted measures |
+| Writer | One report built only from the three findings | none (reads state) |
+| Critic | Rule checks (verifier) first, then an LLM review of judgment and conflicts; targeted revision requests to the owning agent, max 2 rounds | verifier, reads all findings |
 
-The four specialists run in parallel after the Orchestrator, then the Critic reviews, then the report.
+Coordination (hybrid graph): Coordinator -> Options Analyst and Market Context in parallel -> join ->
+Risk Strategist -> Writer -> Critic -> (revision to the owning agent, max 2 rounds) -> report. Agents
+communicate only through shared typed state: one-way handoffs along the pipeline, two-way Critic validation,
+brainstorming only inside the ToT search. Findings are structured claims with their tool evidence and a
+confidence level. Conditional edges: no earnings before expiry skips the volatility-drop scenario; a failed
+data source is retried, replaced, then marked low confidence.
 
 Strategies to compare: long call/put, vertical spread, covered call, cash-secured put.
 
@@ -151,7 +160,7 @@ one-spread `compare_strategies` when `analyze_contract(..., use_tot=True)`; both
 | --- | --- |
 | Thought | One narrowing decision: strategy family (depth 1), strikes (depth 2), expiration (depth 3) |
 | Generator | LLM via `get_llm()` proposes from a menu of listed strikes/expirations (propose, not sample); off-menu replies are discarded and invalid replies fall back to default choices (`TOT_PROPOSER=rules` skips the LLM) |
-| Evaluator | Deterministic Python score out of 100: risk reduction 30, breakeven distance 25, chance beyond breakeven (Black-Scholes) 20, exposure to a 40% IV drop 15, worst-leg liquidity 10 |
+| Evaluator | Deterministic Python score out of 100: risk reduction 30 (maximum loss plus the bid-ask cost to open, since Checkpoint 4 feedback), breakeven distance 25, chance beyond breakeven (Black-Scholes) 20, exposure to a 40% IV drop 15, worst-leg liquidity 10 |
 | Search | Beam search, width 3, depth 3, as a LangGraph loop (generate -> evaluate -> select); the tree (parent, legs, score, pruning reason) lives in the graph state |
 
 - Families: call -> bull call spread, bull put spread, cheaper (further OTM) call; put -> bear put spread,
@@ -161,7 +170,8 @@ one-spread `compare_strategies` when `analyze_contract(..., use_tot=True)`; both
   *every* expiration on the menu (lookahead). The first version completed them at the original expiration
   only, so a thin original expiration pruned every family at depth 1; the evaluation below found this.
 - Pruning (objective only): a leg with poor liquidity or no two-sided quote, maximum loss not lower than
-  the original, or score below 40. Ties within 2 points go to lower max loss, better liquidity, fewer legs.
+  the original, a Black-Scholes chance beyond breakeven below 15% (a "lottery ticket": added after the
+  risk-adjusted evaluation found a 2% SPY call scoring 62), or score below 40. Ties within 2 points go to lower max loss, better liquidity, fewer legs.
 - Diversity: the beam keeps each surviving family's best node first at every level. (The design said
   depth 1, but a family has one node there; crowding happens at depth 2, where it has several strikes.)
 - Limits: at most 24 scored nodes, 3 option chains, about 7 proposal calls, 900 s time limit (best so far).
@@ -196,7 +206,12 @@ ToT scale. "Usable" = passes the pruning checks. Run 2026-11-01, qwen3:8b propos
   while exhaustive only covers the 4 default steps.
 - No method found a usable alternative for KO, AMD or F: every candidate had a thin leg or too low a
   score, and the tool says so instead of forcing a pick.
-- Not yet measured: report quality end to end (`analyze_contract(use_tot=True)` in `evaluate.py`).
+- Full agent with and without ToT (`evaluate.py --setups retrieval_verified,retrieval_verified_tot --out tot`,
+  `docs/evaluation/summary_tot.md`, 10 contracts, 2026-11-02): first drafts with ToT used every required
+  tool (100% vs 81%) and had 9 unsupported numbers vs 25, with 1.0 revisions vs 1.5; final reports were
+  equal (1 unsupported number each), 0 recommendations in all 20 runs, 13.7 vs 13.2 minutes per run,
+  ~60% more input tokens. One ToT final report (F) still called a "good" liquidity rating poor.
+  Recommendation quality needs a judgment-based review (rubric, later the LLM Critic).
 
 ## Validation loop (from instructor feedback on Checkpoint 3)
 
@@ -266,7 +281,12 @@ checks that score it, so its first-draft scores are reported too, and reports ar
 - [x] Run the full evaluation (10 contracts x 3 setups) and record results
 - [x] Tree-of-Thought lower-risk alternative search (`search_alternatives`, `use_tot`, Checkpoint 4)
 - [x] Evaluate ToT vs fixed-spread alternative on the evaluation contracts (beam vs exhaustive; lookahead fix)
-- [ ] ToT report quality end to end (`evaluate.py` setup with `use_tot`)
+- [x] ToT report quality end to end (`evaluate.py` setup with `use_tot`): accuracy, compliance, latency
+- [x] Risk-adjusted comparison of the picks (Checkpoint 4 feedback; `analytics/risk_metrics.py`,
+      `docs/evaluation/tot_summary_risk.md`); score fix: 15% chance floor + bid-ask cost in risk points
+      (same data scored both ways: `tot_summary_scored_checkpoint4.md` vs `tot_summary_scored.md`)
+- [ ] LLM vs rule proposer on a larger, more diverse contract set (Checkpoint 4 feedback)
+- [ ] Recommendation-quality rubric for the with/without-ToT reports (Checkpoint 4 feedback)
 - [ ] SQLite long-term memory and comparison with past analyses
 - [ ] Report shown in the dashboard
 - [ ] Scenario snapshots, answer keys and evaluation harness (with/without Critic)

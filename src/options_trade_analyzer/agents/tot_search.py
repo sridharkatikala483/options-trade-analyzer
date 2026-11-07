@@ -257,9 +257,10 @@ class Search:
                 "llm_proposals": self.proposer.calls,
                 "llm_fallbacks": self.proposer.fallbacks,
             },
-            "scoring": "100 points: risk reduction 30, breakeven distance 25, chance beyond breakeven 20, "
-                       "volatility-drop exposure 15, liquidity 10; pruned if a leg is illiquid, the maximum "
-                       "loss is not lower, or the score is below 40",
+            "scoring": "100 points: risk reduction 30 (maximum loss plus the bid-ask cost to open), "
+                       "breakeven distance 25, chance beyond breakeven 20, volatility-drop exposure 15, "
+                       "liquidity 10; pruned if a leg is illiquid, the maximum loss is not lower, the chance "
+                       "beyond breakeven is below 15%, or the score is below 40",
             "note": "Mid-price quotes; payoffs at each position's own expiration. The chance is a "
                     "Black-Scholes estimate, not a forecast. Lower maximum loss does not guarantee a profit, "
                     "and spreads cap the gain.",

@@ -1,0 +1,1501 @@
+[
+ {
+  "contract": {
+   "ticker": "AAPL",
+   "option_type": "call",
+   "strike": 342.5,
+   "expiration": "2026-11-20"
+  },
+  "original_max_loss": 752.5,
+  "fixed": {
+   "strategy": "bull call spread 342.5/352.5",
+   "expiration": "2026-11-20",
+   "max_loss": 440.0,
+   "score": 63.4,
+   "pruned": null
+  },
+  "beam_rules": {
+   "strategy": "bull put spread 342.5/335",
+   "expiration": "2026-11-20",
+   "max_loss": 475.0,
+   "score": 72.2,
+   "pruned": null,
+   "nodes_scored": 20,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bull put spread 342.5/335",
+   "expiration": "2026-11-20",
+   "max_loss": 475.0,
+   "score": 72.2,
+   "pruned": null
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": "bull call spread 342.5/347.5",
+   "expiration": "2026-11-20",
+   "max_loss": 247.5,
+   "score": 75.9,
+   "pruned": null,
+   "nodes_scored": 18,
+   "llm_proposals": 7,
+   "llm_fallbacks": 0,
+   "seconds": 34
+  },
+  "risk": {
+   "original": {
+    "strategy": "original 342.5",
+    "expiration": "2026-11-20",
+    "max_loss": 752.5,
+    "max_gain": "unlimited",
+    "reward_to_risk": null,
+    "risk_neutral": {
+     "expected_pnl": 52.63,
+     "chance_of_profit_pct": 35.0
+    },
+    "historical": {
+     "expected_pnl": 137.96,
+     "chance_of_profit_pct": 42.6,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 12.5,
+     "round_trip": 25.0
+    },
+    "iv_change": {
+     "-40%": -313.59,
+     "-20%": -156.8,
+     "+20%": 156.79
+    }
+   },
+   "fixed": {
+    "strategy": "bull call spread 342.5/352.5",
+    "expiration": "2026-11-20",
+    "max_loss": 440.0,
+    "max_gain": 560.0,
+    "reward_to_risk": 1.27,
+    "risk_neutral": {
+     "expected_pnl": -45.26,
+     "chance_of_profit_pct": 40.6
+    },
+    "historical": {
+     "expected_pnl": 40.58,
+     "chance_of_profit_pct": 49.5,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 20.0,
+     "round_trip": 40.0
+    },
+    "iv_change": {
+     "-40%": -81.81,
+     "-20%": -34.32,
+     "+20%": 27.12
+    }
+   },
+   "beam_rules": {
+    "strategy": "bull put spread 342.5/335",
+    "expiration": "2026-11-20",
+    "max_loss": 475.0,
+    "max_gain": 275.0,
+    "reward_to_risk": 0.58,
+    "risk_neutral": {
+     "expected_pnl": -44.97,
+     "chance_of_profit_pct": 55.3
+    },
+    "historical": {
+     "expected_pnl": 30.97,
+     "chance_of_profit_pct": 65.6,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 20.0,
+     "round_trip": 40.0
+    },
+    "iv_change": {
+     "-40%": 19.79,
+     "-20%": 5.39,
+     "+20%": -0.66
+    }
+   },
+   "beam_llm": {
+    "strategy": "bull call spread 342.5/347.5",
+    "expiration": "2026-11-20",
+    "max_loss": 247.5,
+    "max_gain": 252.5,
+    "reward_to_risk": 1.02,
+    "risk_neutral": {
+     "expected_pnl": -24.78,
+     "chance_of_profit_pct": 44.6
+    },
+    "historical": {
+     "expected_pnl": 19.21,
+     "chance_of_profit_pct": 53.6,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 22.5,
+     "round_trip": 45.0
+    },
+    "iv_change": {
+     "-40%": -25.56,
+     "-20%": -11.05,
+     "+20%": 9.28
+    }
+   },
+   "exhaustive": {
+    "strategy": "bull put spread 342.5/335",
+    "expiration": "2026-11-20",
+    "max_loss": 475.0,
+    "max_gain": 275.0,
+    "reward_to_risk": 0.58,
+    "risk_neutral": {
+     "expected_pnl": -44.97,
+     "chance_of_profit_pct": 55.3
+    },
+    "historical": {
+     "expected_pnl": 30.97,
+     "chance_of_profit_pct": 65.6,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 20.0,
+     "round_trip": 40.0
+    },
+    "iv_change": {
+     "-40%": 19.79,
+     "-20%": 5.39,
+     "+20%": -0.66
+    }
+   }
+  }
+ },
+ {
+  "contract": {
+   "ticker": "AAPL",
+   "option_type": "put",
+   "strike": 342.5,
+   "expiration": "2026-11-20"
+  },
+  "original_max_loss": 740.0,
+  "fixed": {
+   "strategy": "bear put spread 342.5/332.5",
+   "expiration": "2026-11-20",
+   "max_loss": 340.0,
+   "score": 70.7,
+   "pruned": null
+  },
+  "beam_rules": {
+   "strategy": "bear put spread 342.5/335",
+   "expiration": "2026-11-20",
+   "max_loss": 275.0,
+   "score": 74.9,
+   "pruned": null,
+   "nodes_scored": 20,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bear put spread 342.5/335",
+   "expiration": "2026-11-20",
+   "max_loss": 275.0,
+   "score": 74.9,
+   "pruned": null
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": "bear put spread 342.5/337.5",
+   "expiration": "2026-11-20",
+   "max_loss": 195.0,
+   "score": 79.8,
+   "pruned": null,
+   "nodes_scored": 12,
+   "llm_proposals": 6,
+   "llm_fallbacks": 0,
+   "seconds": 26
+  },
+  "risk": {
+   "original": {
+    "strategy": "original 342.5",
+    "expiration": "2026-11-20",
+    "max_loss": 740.0,
+    "max_gain": 33510.0,
+    "reward_to_risk": 45.28,
+    "risk_neutral": {
+     "expected_pnl": -4.42,
+     "chance_of_profit_pct": 34.9
+    },
+    "historical": {
+     "expected_pnl": -180.81,
+     "chance_of_profit_pct": 25.7,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 10.0,
+     "round_trip": 20.0
+    },
+    "iv_change": {
+     "-40%": -302.3,
+     "-20%": -151.16,
+     "+20%": 151.15
+    }
+   },
+   "fixed": {
+    "strategy": "bear put spread 342.5/332.5",
+    "expiration": "2026-11-20",
+    "max_loss": 340.0,
+    "max_gain": 660.0,
+    "reward_to_risk": 1.94,
+    "risk_neutral": {
+     "expected_pnl": 63.82,
+     "chance_of_profit_pct": 43.5
+    },
+    "historical": {
+     "expected_pnl": -37.46,
+     "chance_of_profit_pct": 32.6,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 20.0,
+     "round_trip": 40.0
+    },
+    "iv_change": {
+     "-40%": -35.31,
+     "-20%": -10.67,
+     "+20%": 3.08
+    }
+   },
+   "beam_rules": {
+    "strategy": "bear put spread 342.5/335",
+    "expiration": "2026-11-20",
+    "max_loss": 275.0,
+    "max_gain": 475.0,
+    "reward_to_risk": 1.73,
+    "risk_neutral": {
+     "expected_pnl": 44.97,
+     "chance_of_profit_pct": 44.7
+    },
+    "historical": {
+     "expected_pnl": -30.97,
+     "chance_of_profit_pct": 34.4,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 20.0,
+     "round_trip": 40.0
+    },
+    "iv_change": {
+     "-40%": -19.79,
+     "-20%": -5.39,
+     "+20%": 0.66
+    }
+   },
+   "beam_llm": {
+    "strategy": "bear put spread 342.5/337.5",
+    "expiration": "2026-11-20",
+    "max_loss": 195.0,
+    "max_gain": 305.0,
+    "reward_to_risk": 1.56,
+    "risk_neutral": {
+     "expected_pnl": 30.4,
+     "chance_of_profit_pct": 46.2
+    },
+    "historical": {
+     "expected_pnl": -19.33,
+     "chance_of_profit_pct": 36.7,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 20.0,
+     "round_trip": 40.0
+    },
+    "iv_change": {
+     "-40%": -6.43,
+     "-20%": -0.93,
+     "+20%": -1.42
+    }
+   },
+   "exhaustive": {
+    "strategy": "bear put spread 342.5/335",
+    "expiration": "2026-11-20",
+    "max_loss": 275.0,
+    "max_gain": 475.0,
+    "reward_to_risk": 1.73,
+    "risk_neutral": {
+     "expected_pnl": 44.97,
+     "chance_of_profit_pct": 44.7
+    },
+    "historical": {
+     "expected_pnl": -30.97,
+     "chance_of_profit_pct": 34.4,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 20.0,
+     "round_trip": 40.0
+    },
+    "iv_change": {
+     "-40%": -19.79,
+     "-20%": -5.39,
+     "+20%": 0.66
+    }
+   }
+  }
+ },
+ {
+  "contract": {
+   "ticker": "MSFT",
+   "option_type": "call",
+   "strike": 555.0,
+   "expiration": "2026-12-11"
+  },
+  "original_max_loss": 940.0,
+  "fixed": {
+   "strategy": "bull call spread 555/570",
+   "expiration": "2026-12-11",
+   "max_loss": 420.0,
+   "score": 44.4,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": "bull call spread 555/570",
+   "expiration": "2026-12-18",
+   "max_loss": 435.0,
+   "score": 54.7,
+   "pruned": null,
+   "nodes_scored": 19,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bull call spread 555/570",
+   "expiration": "2026-12-18",
+   "max_loss": 435.0,
+   "score": 54.7,
+   "pruned": null
+  },
+  "exhaustive_candidates": 24,
+  "beam_llm": {
+   "strategy": "bull call spread 555/570",
+   "expiration": "2026-12-18",
+   "max_loss": 435.0,
+   "score": 54.7,
+   "pruned": null,
+   "nodes_scored": 16,
+   "llm_proposals": 5,
+   "llm_fallbacks": 0,
+   "seconds": 29
+  },
+  "risk": {
+   "original": {
+    "strategy": "original 555",
+    "expiration": "2026-12-11",
+    "max_loss": 940.0,
+    "max_gain": "unlimited",
+    "reward_to_risk": null,
+    "risk_neutral": {
+     "expected_pnl": 183.84,
+     "chance_of_profit_pct": 25.6
+    },
+    "historical": {
+     "expected_pnl": 429.96,
+     "chance_of_profit_pct": 25.8,
+     "windows": 477,
+     "trading_days": 24
+    },
+    "spread_cost": {
+     "open": 105.0,
+     "round_trip": 210.0
+    },
+    "iv_change": {
+     "-40%": -700.55,
+     "-20%": -363.83,
+     "+20%": 378.14
+    }
+   },
+   "fixed": {
+    "strategy": "bull call spread 555/570",
+    "expiration": "2026-12-11",
+    "max_loss": 420.0,
+    "max_gain": 1080.0,
+    "reward_to_risk": 2.57,
+    "risk_neutral": {
+     "expected_pnl": -27.05,
+     "chance_of_profit_pct": 28.3
+    },
+    "historical": {
+     "expected_pnl": -20.52,
+     "chance_of_profit_pct": 29.4,
+     "windows": 477,
+     "trading_days": 24
+    },
+    "spread_cost": {
+     "open": 170.0,
+     "round_trip": 340.0
+    },
+    "iv_change": {
+     "-40%": -207.13,
+     "-20%": -88.49,
+     "+20%": 68.46
+    }
+   },
+   "beam_rules": {
+    "strategy": "bull call spread 555/570",
+    "expiration": "2026-12-18",
+    "max_loss": 435.0,
+    "max_gain": 1065.0,
+    "reward_to_risk": 2.45,
+    "risk_neutral": {
+     "expected_pnl": -22.54,
+     "chance_of_profit_pct": 29.5
+    },
+    "historical": {
+     "expected_pnl": 8.6,
+     "chance_of_profit_pct": 31.1,
+     "windows": 472,
+     "trading_days": 29
+    },
+    "spread_cost": {
+     "open": 50.0,
+     "round_trip": 100.0
+    },
+    "iv_change": {
+     "-40%": -173.08,
+     "-20%": -71.24,
+     "+20%": 51.97
+    }
+   },
+   "beam_llm": {
+    "strategy": "bull call spread 555/570",
+    "expiration": "2026-12-18",
+    "max_loss": 435.0,
+    "max_gain": 1065.0,
+    "reward_to_risk": 2.45,
+    "risk_neutral": {
+     "expected_pnl": -22.54,
+     "chance_of_profit_pct": 29.5
+    },
+    "historical": {
+     "expected_pnl": 8.6,
+     "chance_of_profit_pct": 31.1,
+     "windows": 472,
+     "trading_days": 29
+    },
+    "spread_cost": {
+     "open": 50.0,
+     "round_trip": 100.0
+    },
+    "iv_change": {
+     "-40%": -173.08,
+     "-20%": -71.24,
+     "+20%": 51.97
+    }
+   },
+   "exhaustive": {
+    "strategy": "bull call spread 555/570",
+    "expiration": "2026-12-18",
+    "max_loss": 435.0,
+    "max_gain": 1065.0,
+    "reward_to_risk": 2.45,
+    "risk_neutral": {
+     "expected_pnl": -22.54,
+     "chance_of_profit_pct": 29.5
+    },
+    "historical": {
+     "expected_pnl": 8.6,
+     "chance_of_profit_pct": 31.1,
+     "windows": 472,
+     "trading_days": 29
+    },
+    "spread_cost": {
+     "open": 50.0,
+     "round_trip": 100.0
+    },
+    "iv_change": {
+     "-40%": -173.08,
+     "-20%": -71.24,
+     "+20%": 51.97
+    }
+   }
+  }
+ },
+ {
+  "contract": {
+   "ticker": "NVDA",
+   "option_type": "call",
+   "strike": 185.0,
+   "expiration": "2026-11-20"
+  },
+  "original_max_loss": 1142.5,
+  "fixed": {
+   "strategy": "bull call spread 185/190",
+   "expiration": "2026-11-20",
+   "max_loss": 260.0,
+   "score": 80.8,
+   "pruned": null
+  },
+  "beam_rules": {
+   "strategy": "bull put spread 185/180",
+   "expiration": "2026-12-04",
+   "max_loss": 290.0,
+   "score": 82.9,
+   "pruned": null,
+   "nodes_scored": 20,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bull put spread 185/180",
+   "expiration": "2026-12-04",
+   "max_loss": 290.0,
+   "score": 82.9,
+   "pruned": null
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": "bull put spread 185/180",
+   "expiration": "2026-12-04",
+   "max_loss": 290.0,
+   "score": 82.9,
+   "pruned": null,
+   "nodes_scored": 16,
+   "llm_proposals": 6,
+   "llm_fallbacks": 0,
+   "seconds": 27
+  },
+  "risk": {
+   "original": {
+    "strategy": "original 185",
+    "expiration": "2026-11-20",
+    "max_loss": 1142.5,
+    "max_gain": "unlimited",
+    "reward_to_risk": null,
+    "risk_neutral": {
+     "expected_pnl": 32.98,
+     "chance_of_profit_pct": 34.0
+    },
+    "historical": {
+     "expected_pnl": -440.76,
+     "chance_of_profit_pct": 24.8,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 2.5,
+     "round_trip": 5.0
+    },
+    "iv_change": {
+     "-40%": -428.29,
+     "-20%": -214.28,
+     "+20%": 214.29
+    }
+   },
+   "fixed": {
+    "strategy": "bull call spread 185/190",
+    "expiration": "2026-11-20",
+    "max_loss": 260.0,
+    "max_gain": 240.0,
+    "reward_to_risk": 0.92,
+    "risk_neutral": {
+     "expected_pnl": -28.76,
+     "chance_of_profit_pct": 46.2
+    },
+    "historical": {
+     "expected_pnl": -8.7,
+     "chance_of_profit_pct": 49.7,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 5.0,
+     "round_trip": 10.0
+    },
+    "iv_change": {
+     "-40%": -9.54,
+     "-20%": -4.41,
+     "+20%": 4.05
+    }
+   },
+   "beam_rules": {
+    "strategy": "bull put spread 185/180",
+    "expiration": "2026-12-04",
+    "max_loss": 290.0,
+    "max_gain": 210.0,
+    "reward_to_risk": 0.72,
+    "risk_neutral": {
+     "expected_pnl": -24.28,
+     "chance_of_profit_pct": 52.4
+    },
+    "historical": {
+     "expected_pnl": 40.98,
+     "chance_of_profit_pct": 65.1,
+     "windows": 482,
+     "trading_days": 19
+    },
+    "spread_cost": {
+     "open": 25.0,
+     "round_trip": 50.0
+    },
+    "iv_change": {
+     "-40%": 15.02,
+     "-20%": 5.07,
+     "+20%": -2.6
+    }
+   },
+   "beam_llm": {
+    "strategy": "bull put spread 185/180",
+    "expiration": "2026-12-04",
+    "max_loss": 290.0,
+    "max_gain": 210.0,
+    "reward_to_risk": 0.72,
+    "risk_neutral": {
+     "expected_pnl": -24.28,
+     "chance_of_profit_pct": 52.4
+    },
+    "historical": {
+     "expected_pnl": 40.98,
+     "chance_of_profit_pct": 65.1,
+     "windows": 482,
+     "trading_days": 19
+    },
+    "spread_cost": {
+     "open": 25.0,
+     "round_trip": 50.0
+    },
+    "iv_change": {
+     "-40%": 15.02,
+     "-20%": 5.07,
+     "+20%": -2.6
+    }
+   },
+   "exhaustive": {
+    "strategy": "bull put spread 185/180",
+    "expiration": "2026-12-04",
+    "max_loss": 290.0,
+    "max_gain": 210.0,
+    "reward_to_risk": 0.72,
+    "risk_neutral": {
+     "expected_pnl": -24.28,
+     "chance_of_profit_pct": 52.4
+    },
+    "historical": {
+     "expected_pnl": 40.98,
+     "chance_of_profit_pct": 65.1,
+     "windows": 482,
+     "trading_days": 19
+    },
+    "spread_cost": {
+     "open": 25.0,
+     "round_trip": 50.0
+    },
+    "iv_change": {
+     "-40%": 15.02,
+     "-20%": 5.07,
+     "+20%": -2.6
+    }
+   }
+  }
+ },
+ {
+  "contract": {
+   "ticker": "TSLA",
+   "option_type": "put",
+   "strike": 340.0,
+   "expiration": "2026-11-20"
+  },
+  "original_max_loss": 890.0,
+  "fixed": {
+   "strategy": "bear put spread 340/330",
+   "expiration": "2026-11-20",
+   "max_loss": 242.5,
+   "score": 61.8,
+   "pruned": null
+  },
+  "beam_rules": {
+   "strategy": "bear call spread 340/350",
+   "expiration": "2026-11-27",
+   "max_loss": 312.5,
+   "score": 64.1,
+   "pruned": null,
+   "nodes_scored": 24,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bear call spread 340/350",
+   "expiration": "2026-11-27",
+   "max_loss": 312.5,
+   "score": 64.1,
+   "pruned": null
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": "bear put spread 340/330",
+   "expiration": "2026-11-20",
+   "max_loss": 242.5,
+   "score": 61.8,
+   "pruned": null,
+   "nodes_scored": 19,
+   "llm_proposals": 6,
+   "llm_fallbacks": 0,
+   "seconds": 29
+  },
+  "risk": {
+   "original": {
+    "strategy": "original 340",
+    "expiration": "2026-11-20",
+    "max_loss": 890.0,
+    "max_gain": 33110.0,
+    "reward_to_risk": 37.2,
+    "risk_neutral": {
+     "expected_pnl": 7.38,
+     "chance_of_profit_pct": 27.2
+    },
+    "historical": {
+     "expected_pnl": -323.63,
+     "chance_of_profit_pct": 17.9,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 10.0,
+     "round_trip": 20.0
+    },
+    "iv_change": {
+     "-40%": -565.73,
+     "-20%": -294.52,
+     "+20%": 306.83
+    }
+   },
+   "fixed": {
+    "strategy": "bear put spread 340/330",
+    "expiration": "2026-11-20",
+    "max_loss": 242.5,
+    "max_gain": 757.5,
+    "reward_to_risk": 3.12,
+    "risk_neutral": {
+     "expected_pnl": 67.37,
+     "chance_of_profit_pct": 33.2
+    },
+    "historical": {
+     "expected_pnl": -33.96,
+     "chance_of_profit_pct": 23.4,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 17.5,
+     "round_trip": 35.0
+    },
+    "iv_change": {
+     "-40%": -84.66,
+     "-20%": -32.33,
+     "+20%": 19.82
+    }
+   },
+   "beam_rules": {
+    "strategy": "bear call spread 340/350",
+    "expiration": "2026-11-27",
+    "max_loss": 312.5,
+    "max_gain": 687.5,
+    "reward_to_risk": 2.2,
+    "risk_neutral": {
+     "expected_pnl": 100.54,
+     "chance_of_profit_pct": 42.7
+    },
+    "historical": {
+     "expected_pnl": 27.59,
+     "chance_of_profit_pct": 35.7,
+     "windows": 487,
+     "trading_days": 14
+    },
+    "spread_cost": {
+     "open": 107.5,
+     "round_trip": 215.0
+    },
+    "iv_change": {
+     "-40%": -36.0,
+     "-20%": -10.05,
+     "+20%": 1.64
+    }
+   },
+   "beam_llm": {
+    "strategy": "bear put spread 340/330",
+    "expiration": "2026-11-20",
+    "max_loss": 242.5,
+    "max_gain": 757.5,
+    "reward_to_risk": 3.12,
+    "risk_neutral": {
+     "expected_pnl": 67.37,
+     "chance_of_profit_pct": 33.2
+    },
+    "historical": {
+     "expected_pnl": -33.96,
+     "chance_of_profit_pct": 23.4,
+     "windows": 491,
+     "trading_days": 10
+    },
+    "spread_cost": {
+     "open": 17.5,
+     "round_trip": 35.0
+    },
+    "iv_change": {
+     "-40%": -84.66,
+     "-20%": -32.33,
+     "+20%": 19.82
+    }
+   },
+   "exhaustive": {
+    "strategy": "bear call spread 340/350",
+    "expiration": "2026-11-27",
+    "max_loss": 312.5,
+    "max_gain": 687.5,
+    "reward_to_risk": 2.2,
+    "risk_neutral": {
+     "expected_pnl": 100.54,
+     "chance_of_profit_pct": 42.7
+    },
+    "historical": {
+     "expected_pnl": 27.59,
+     "chance_of_profit_pct": 35.7,
+     "windows": 487,
+     "trading_days": 14
+    },
+    "spread_cost": {
+     "open": 107.5,
+     "round_trip": 215.0
+    },
+    "iv_change": {
+     "-40%": -36.0,
+     "-20%": -10.05,
+     "+20%": 1.64
+    }
+   }
+  }
+ },
+ {
+  "contract": {
+   "ticker": "KO",
+   "option_type": "call",
+   "strike": 96.0,
+   "expiration": "2026-12-11"
+  },
+  "original_max_loss": 231.5,
+  "fixed": {
+   "strategy": "bull call spread 96/99",
+   "expiration": "2026-12-11",
+   "max_loss": 114.0,
+   "score": 57.4,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: a leg has poor liquidity",
+   "nodes_scored": 3,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": null,
+   "pruned": "every candidate pruned"
+  },
+  "exhaustive_candidates": 30,
+  "beam_llm": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: a leg has poor liquidity",
+   "nodes_scored": 3,
+   "llm_proposals": 1,
+   "llm_fallbacks": 0,
+   "seconds": 4
+  },
+  "risk": {
+   "original": {
+    "strategy": "original 96",
+    "expiration": "2026-12-11",
+    "max_loss": 231.5,
+    "max_gain": "unlimited",
+    "reward_to_risk": null,
+    "risk_neutral": {
+     "expected_pnl": 47.14,
+     "chance_of_profit_pct": 36.0
+    },
+    "historical": {
+     "expected_pnl": 43.4,
+     "chance_of_profit_pct": 38.4,
+     "windows": 477,
+     "trading_days": 24
+    },
+    "spread_cost": {
+     "open": 27.5,
+     "round_trip": 55.0
+    },
+    "iv_change": {
+     "-40%": -110.59,
+     "-20%": -55.29,
+     "+20%": 55.27
+    }
+   },
+   "fixed": {
+    "strategy": "bull call spread 96/99",
+    "expiration": "2026-12-11",
+    "max_loss": 114.0,
+    "max_gain": 186.0,
+    "reward_to_risk": 1.63,
+    "risk_neutral": {
+     "expected_pnl": 6.54,
+     "chance_of_profit_pct": 42.2
+    },
+    "historical": {
+     "expected_pnl": 20.7,
+     "chance_of_profit_pct": 47.0,
+     "windows": 477,
+     "trading_days": 24
+    },
+    "spread_cost": {
+     "open": 45.0,
+     "round_trip": 90.0
+    },
+    "iv_change": {
+     "-40%": -17.91,
+     "-20%": -7.15,
+     "+20%": 5.23
+    }
+   }
+  }
+ },
+ {
+  "contract": {
+   "ticker": "AMD",
+   "option_type": "call",
+   "strike": 495.0,
+   "expiration": "2026-12-11"
+  },
+  "original_max_loss": 1915.0,
+  "fixed": {
+   "strategy": "bull call spread 495/510",
+   "expiration": "2026-12-11",
+   "max_loss": 412.5,
+   "score": 42.1,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: a leg has poor liquidity, score below 40",
+   "nodes_scored": 3,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": null,
+   "pruned": "every candidate pruned"
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: a leg has poor liquidity, score below 40",
+   "nodes_scored": 3,
+   "llm_proposals": 1,
+   "llm_fallbacks": 0,
+   "seconds": 4
+  },
+  "risk": {
+   "original": {
+    "strategy": "original 495",
+    "expiration": "2026-12-11",
+    "max_loss": 1915.0,
+    "max_gain": "unlimited",
+    "reward_to_risk": null,
+    "risk_neutral": {
+     "expected_pnl": 77.34,
+     "chance_of_profit_pct": 22.7
+    },
+    "historical": {
+     "expected_pnl": 2384.5,
+     "chance_of_profit_pct": 36.1,
+     "windows": 477,
+     "trading_days": 24
+    },
+    "spread_cost": {
+     "open": 80.0,
+     "round_trip": 160.0
+    },
+    "iv_change": {
+     "-40%": -1269.91,
+     "-20%": -662.5,
+     "+20%": 691.14
+    }
+   },
+   "fixed": {
+    "strategy": "bull call spread 495/510",
+    "expiration": "2026-12-11",
+    "max_loss": 412.5,
+    "max_gain": 1087.5,
+    "reward_to_risk": 2.64,
+    "risk_neutral": {
+     "expected_pnl": -21.88,
+     "chance_of_profit_pct": 27.2
+    },
+    "historical": {
+     "expected_pnl": 155.34,
+     "chance_of_profit_pct": 38.8,
+     "windows": 477,
+     "trading_days": 24
+    },
+    "spread_cost": {
+     "open": 167.5,
+     "round_trip": 335.0
+    },
+    "iv_change": {
+     "-40%": -154.33,
+     "-20%": -61.68,
+     "+20%": 42.51
+    }
+   }
+  }
+ },
+ {
+  "contract": {
+   "ticker": "SPY",
+   "option_type": "call",
+   "strike": 735.0,
+   "expiration": "2026-11-13"
+  },
+  "original_max_loss": 1025.0,
+  "fixed": {
+   "strategy": "bull call spread 735/757",
+   "expiration": "2026-11-13",
+   "max_loss": 889.5,
+   "score": 48.3,
+   "pruned": null
+  },
+  "beam_rules": {
+   "strategy": "cheaper call 772",
+   "expiration": "2026-11-13",
+   "max_loss": 11.0,
+   "score": 62.1,
+   "pruned": null,
+   "nodes_scored": 20,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "cheaper call 772",
+   "expiration": "2026-11-13",
+   "max_loss": 11.0,
+   "score": 62.1,
+   "pruned": null
+  },
+  "exhaustive_candidates": 36,
+  "beam_llm": {
+   "strategy": "bull call spread 735/746",
+   "expiration": "2026-11-13",
+   "max_loss": 560.5,
+   "score": 66.7,
+   "pruned": null,
+   "nodes_scored": 13,
+   "llm_proposals": 6,
+   "llm_fallbacks": 0,
+   "seconds": 24
+  },
+  "risk": {
+   "original": {
+    "strategy": "original 735",
+    "expiration": "2026-11-13",
+    "max_loss": 1025.0,
+    "max_gain": "unlimited",
+    "reward_to_risk": null,
+    "risk_neutral": {
+     "expected_pnl": 69.7,
+     "chance_of_profit_pct": 35.5
+    },
+    "historical": {
+     "expected_pnl": -350.23,
+     "chance_of_profit_pct": 24.8,
+     "windows": 496,
+     "trading_days": 5
+    },
+    "spread_cost": {
+     "open": 4.0,
+     "round_trip": 8.0
+    },
+    "iv_change": {
+     "-40%": -419.39,
+     "-20%": -209.74,
+     "+20%": 209.78
+    }
+   },
+   "fixed": {
+    "strategy": "bull call spread 735/757",
+    "expiration": "2026-11-13",
+    "max_loss": 889.5,
+    "max_gain": 1310.5,
+    "reward_to_risk": 1.47,
+    "risk_neutral": {
+     "expected_pnl": -156.01,
+     "chance_of_profit_pct": 36.0
+    },
+    "historical": {
+     "expected_pnl": -290.29,
+     "chance_of_profit_pct": 30.0,
+     "windows": 496,
+     "trading_days": 5
+    },
+    "spread_cost": {
+     "open": 6.5,
+     "round_trip": 13.0
+    },
+    "iv_change": {
+     "-40%": -278.7,
+     "-20%": -124.62,
+     "+20%": 104.03
+    }
+   },
+   "beam_rules": {
+    "strategy": "cheaper call 772",
+    "expiration": "2026-11-13",
+    "max_loss": 11.0,
+    "max_gain": "unlimited",
+    "reward_to_risk": null,
+    "risk_neutral": {
+     "expected_pnl": 5.35,
+     "chance_of_profit_pct": 2.3
+    },
+    "historical": {
+     "expected_pnl": 2.96,
+     "chance_of_profit_pct": 1.8,
+     "windows": 496,
+     "trading_days": 5
+    },
+    "spread_cost": {
+     "open": 1.0,
+     "round_trip": 2.0
+    },
+    "iv_change": {
+     "-40%": -16.29,
+     "-20%": -13.25,
+     "+20%": 28.94
+    }
+   },
+   "beam_llm": {
+    "strategy": "bull call spread 735/746",
+    "expiration": "2026-11-13",
+    "max_loss": 560.5,
+    "max_gain": 539.5,
+    "reward_to_risk": 0.96,
+    "risk_neutral": {
+     "expected_pnl": -98.01,
+     "chance_of_profit_pct": 41.9
+    },
+    "historical": {
+     "expected_pnl": -109.82,
+     "chance_of_profit_pct": 39.7,
+     "windows": 496,
+     "trading_days": 5
+    },
+    "spread_cost": {
+     "open": 7.5,
+     "round_trip": 15.0
+    },
+    "iv_change": {
+     "-40%": -98.35,
+     "-20%": -43.06,
+     "+20%": 36.56
+    }
+   },
+   "exhaustive": {
+    "strategy": "cheaper call 772",
+    "expiration": "2026-11-13",
+    "max_loss": 11.0,
+    "max_gain": "unlimited",
+    "reward_to_risk": null,
+    "risk_neutral": {
+     "expected_pnl": 5.35,
+     "chance_of_profit_pct": 2.3
+    },
+    "historical": {
+     "expected_pnl": 2.96,
+     "chance_of_profit_pct": 1.8,
+     "windows": 496,
+     "trading_days": 5
+    },
+    "spread_cost": {
+     "open": 1.0,
+     "round_trip": 2.0
+    },
+    "iv_change": {
+     "-40%": -16.29,
+     "-20%": -13.25,
+     "+20%": 28.94
+    }
+   }
+  }
+ },
+ {
+  "contract": {
+   "ticker": "F",
+   "option_type": "call",
+   "strike": 14.0,
+   "expiration": "2027-01-15"
+  },
+  "original_max_loss": 18.5,
+  "fixed": {
+   "strategy": "bull call spread 14/14.85",
+   "expiration": "2027-01-15",
+   "max_loss": 9.0,
+   "score": 32.9,
+   "pruned": "score below 40"
+  },
+  "beam_rules": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: score below 40, maximum loss is not lower than the original",
+   "nodes_scored": 3,
+   "chains_loaded": 1
+  },
+  "exhaustive": {
+   "strategy": null,
+   "pruned": "every candidate pruned"
+  },
+  "exhaustive_candidates": 5,
+  "beam_llm": {
+   "strategy": null,
+   "pruned": "no qualifying alternative: score below 40, maximum loss is not lower than the original",
+   "nodes_scored": 3,
+   "llm_proposals": 1,
+   "llm_fallbacks": 0,
+   "seconds": 4
+  },
+  "risk": {
+   "original": {
+    "strategy": "original 14",
+    "expiration": "2027-01-15",
+    "max_loss": 18.5,
+    "max_gain": "unlimited",
+    "reward_to_risk": null,
+    "risk_neutral": {
+     "expected_pnl": 3.66,
+     "chance_of_profit_pct": 16.9
+    },
+    "historical": {
+     "expected_pnl": -0.91,
+     "chance_of_profit_pct": 16.8,
+     "windows": 453,
+     "trading_days": 48
+    },
+    "spread_cost": {
+     "open": 1.5,
+     "round_trip": 3.0
+    },
+    "iv_change": {
+     "-40%": -17.43,
+     "-20%": -9.83,
+     "+20%": 11.19
+    }
+   },
+   "fixed": {
+    "strategy": "bull call spread 14/14.85",
+    "expiration": "2027-01-15",
+    "max_loss": 9.0,
+    "max_gain": 76.0,
+    "reward_to_risk": 8.44,
+    "risk_neutral": {
+     "expected_pnl": 3.28,
+     "chance_of_profit_pct": 18.4
+    },
+    "historical": {
+     "expected_pnl": 1.4,
+     "chance_of_profit_pct": 18.3,
+     "windows": 453,
+     "trading_days": 48
+    },
+    "spread_cost": {
+     "open": 2.0,
+     "round_trip": 4.0
+    },
+    "iv_change": {
+     "-40%": -7.21,
+     "-20%": -3.33,
+     "+20%": 2.54
+    }
+   }
+  }
+ },
+ {
+  "contract": {
+   "ticker": "JPM",
+   "option_type": "put",
+   "strike": 320.0,
+   "expiration": "2026-12-11"
+  },
+  "original_max_loss": 430.0,
+  "fixed": {
+   "strategy": "bear put spread 320/310",
+   "expiration": "2026-12-11",
+   "max_loss": 143.5,
+   "score": 49.7,
+   "pruned": "a leg has poor liquidity"
+  },
+  "beam_rules": {
+   "strategy": "bear put spread 320/310",
+   "expiration": "2026-12-18",
+   "max_loss": 182.5,
+   "score": 52.2,
+   "pruned": null,
+   "nodes_scored": 7,
+   "chains_loaded": 3
+  },
+  "exhaustive": {
+   "strategy": "bear put spread 320/310",
+   "expiration": "2026-12-18",
+   "max_loss": 182.5,
+   "score": 52.2,
+   "pruned": null
+  },
+  "exhaustive_candidates": 12,
+  "beam_llm": {
+   "strategy": "bear put spread 320/315",
+   "expiration": "2026-12-18",
+   "max_loss": 92.5,
+   "score": 61.1,
+   "pruned": null,
+   "nodes_scored": 9,
+   "llm_proposals": 4,
+   "llm_fallbacks": 0,
+   "seconds": 30
+  },
+  "risk": {
+   "original": {
+    "strategy": "original 320",
+    "expiration": "2026-12-11",
+    "max_loss": 430.0,
+    "max_gain": 31570.0,
+    "reward_to_risk": 73.42,
+    "risk_neutral": {
+     "expected_pnl": 68.4,
+     "chance_of_profit_pct": 24.9
+    },
+    "historical": {
+     "expected_pnl": -233.8,
+     "chance_of_profit_pct": 10.7,
+     "windows": 477,
+     "trading_days": 24
+    },
+    "spread_cost": {
+     "open": 100.0,
+     "round_trip": 200.0
+    },
+    "iv_change": {
+     "-40%": -342.36,
+     "-20%": -182.38,
+     "+20%": 194.76
+    }
+   },
+   "fixed": {
+    "strategy": "bear put spread 320/310",
+    "expiration": "2026-12-11",
+    "max_loss": 143.5,
+    "max_gain": 856.5,
+    "reward_to_risk": 5.97,
+    "risk_neutral": {
+     "expected_pnl": 103.91,
+     "chance_of_profit_pct": 28.9
+    },
+    "historical": {
+     "expected_pnl": -37.98,
+     "chance_of_profit_pct": 15.7,
+     "windows": 477,
+     "trading_days": 24
+    },
+    "spread_cost": {
+     "open": 133.5,
+     "round_trip": 267.0
+    },
+    "iv_change": {
+     "-40%": -95.96,
+     "-20%": -39.77,
+     "+20%": 27.26
+    }
+   },
+   "beam_rules": {
+    "strategy": "bear put spread 320/310",
+    "expiration": "2026-12-18",
+    "max_loss": 182.5,
+    "max_gain": 817.5,
+    "reward_to_risk": 4.48,
+    "risk_neutral": {
+     "expected_pnl": 74.23,
+     "chance_of_profit_pct": 29.3
+    },
+    "historical": {
+     "expected_pnl": -52.01,
+     "chance_of_profit_pct": 15.9,
+     "windows": 472,
+     "trading_days": 29
+    },
+    "spread_cost": {
+     "open": 57.5,
+     "round_trip": 115.0
+    },
+    "iv_change": {
+     "-40%": -86.58,
+     "-20%": -34.68,
+     "+20%": 22.18
+    }
+   },
+   "beam_llm": {
+    "strategy": "bear put spread 320/315",
+    "expiration": "2026-12-18",
+    "max_loss": 92.5,
+    "max_gain": 407.5,
+    "reward_to_risk": 4.41,
+    "risk_neutral": {
+     "expected_pnl": 47.48,
+     "chance_of_profit_pct": 29.9
+    },
+    "historical": {
+     "expected_pnl": -15.7,
+     "chance_of_profit_pct": 17.6,
+     "windows": 472,
+     "trading_days": 29
+    },
+    "spread_cost": {
+     "open": 57.5,
+     "round_trip": 115.0
+    },
+    "iv_change": {
+     "-40%": -43.41,
+     "-20%": -16.91,
+     "+20%": 10.53
+    }
+   },
+   "exhaustive": {
+    "strategy": "bear put spread 320/310",
+    "expiration": "2026-12-18",
+    "max_loss": 182.5,
+    "max_gain": 817.5,
+    "reward_to_risk": 4.48,
+    "risk_neutral": {
+     "expected_pnl": 74.23,
+     "chance_of_profit_pct": 29.3
+    },
+    "historical": {
+     "expected_pnl": -52.01,
+     "chance_of_profit_pct": 15.9,
+     "windows": 472,
+     "trading_days": 29
+    },
+    "spread_cost": {
+     "open": 57.5,
+     "round_trip": 115.0
+    },
+    "iv_change": {
+     "-40%": -86.58,
+     "-20%": -34.68,
+     "+20%": 22.18
+    }
+   }
+  }
+ }
+]

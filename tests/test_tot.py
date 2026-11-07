@@ -70,6 +70,25 @@ def test_pruning_rules(market):
     assert "no two-sided quote" in alt.build("bull call spread", (102.0, 150.0), EXPIRATIONS[0], market)
 
 
+def test_lottery_tickets_are_pruned_despite_a_passing_score(market):
+    # a far out-of-the-money call cuts the maximum loss and scores above 40, but rarely pays off
+    base = alt.original("call", 102.0, EXPIRATIONS[0], market)
+    e = alt.evaluate(alt.build("cheaper call", (106.0,), EXPIRATIONS[0], market), base, market, True)
+    assert e.score >= alt.MIN_SCORE and e.chance_beyond_breakeven < alt.MIN_CHANCE
+    assert e.pruned == "chance beyond breakeven below 15%"
+
+
+def test_risk_reduction_counts_the_bid_ask_cost(market):
+    base = alt.original("call", 102.0, EXPIRATIONS[0], market)
+    spread = alt.build("bull call spread", (102.0, 105.0), EXPIRATIONS[0], market)
+    e = alt.evaluate(spread, base, market, True)
+    quotes = market.quotes(EXPIRATIONS[0], "call")
+    assert e.open_cost == pytest.approx(sum((quotes[k].ask - quotes[k].bid) / 2 * 100 for k in (102.0, 105.0)), abs=0.01)
+    paid, base_paid = e.max_loss + e.open_cost, alt.evaluate(base, base, market, True).max_loss + alt.open_cost(base, market)
+    assert e.points["risk_reduction"] == pytest.approx(30 * (base_paid - paid) / base_paid, abs=0.06)
+    assert e.points["risk_reduction"] < 30 * (1 - e.max_loss / alt.evaluate(base, base, market, True).max_loss)
+
+
 def test_ties_go_to_lower_max_loss(market):
     base = alt.original("call", 102.0, EXPIRATIONS[0], market)
     a = alt.evaluate(alt.build("bull call spread", (102.0, 105.0), EXPIRATIONS[0], market), base, market, True)

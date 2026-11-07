@@ -1,6 +1,7 @@
 """Market data access behind one interface, so yfinance can later be swapped for Schwab."""
 
 import datetime as dt
+import time
 from typing import Protocol
 
 import pandas as pd
@@ -31,7 +32,12 @@ class YFinanceProvider:
         return float(history["Close"].iloc[-1])
 
     def get_price_history(self, ticker: str, period: str = "6mo") -> pd.DataFrame:
-        return yf.Ticker(ticker).history(period=period)
+        # Yahoo sometimes returns an empty frame for a listed ticker ("possibly delisted"); try once more
+        history = yf.Ticker(ticker).history(period=period)
+        if history.empty:
+            time.sleep(2)
+            history = yf.Ticker(ticker).history(period=period)
+        return history
 
     def get_expirations(self, ticker: str) -> list[str]:
         return list(yf.Ticker(ticker).options)
