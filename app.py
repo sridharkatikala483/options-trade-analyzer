@@ -5,7 +5,7 @@ import datetime as dt
 import plotly.graph_objects as go
 import streamlit as st
 
-from options_trade_analyzer import config
+from options_trade_analyzer import clock, config
 from options_trade_analyzer.analytics.options_math import breakeven, payoff_at_expiry
 from options_trade_analyzer.data import get_provider
 
@@ -29,7 +29,7 @@ with st.sidebar:
 spot = provider.get_quote(ticker)
 contract = chain[chain["strike"] == strike].iloc[0]
 premium = float(contract["lastPrice"])
-days_left = (dt.date.fromisoformat(expiration) - dt.date.today()).days
+days_left = (dt.date.fromisoformat(expiration) - clock.today()).days
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Stock price", f"${spot:,.2f}")

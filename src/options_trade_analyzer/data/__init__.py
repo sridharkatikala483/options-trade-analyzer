@@ -6,7 +6,14 @@ from options_trade_analyzer.data.provider import MarketDataProvider, YFinancePro
 def get_provider(name: str = "yfinance") -> MarketDataProvider:
     if name == "yfinance":
         return YFinanceProvider()
-    raise ValueError(f"Unknown data provider: {name!r}")
+    if name == "snapshot":  # replay recorded data; freezes the clock at the recording time
+        from options_trade_analyzer import config
+        from options_trade_analyzer.data.snapshot import SnapshotProvider
+
+        if not config.SNAPSHOT_PATH:
+            raise ValueError("DATA_PROVIDER=snapshot needs SNAPSHOT_PATH (a file in data/snapshots/)")
+        return SnapshotProvider(config.PROJECT_ROOT / config.SNAPSHOT_PATH).activate()
+    raise ValueError(f"Unknown data provider: {name!r} (use 'yfinance' or 'snapshot')")
 
 
 class CachingProvider:

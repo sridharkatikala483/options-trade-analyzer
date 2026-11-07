@@ -18,6 +18,8 @@ import json
 import re
 from dataclasses import dataclass, field
 
+from options_trade_analyzer import clock
+
 MONTHS = {m: i for i, m in enumerate(
     ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], start=1)}
 
@@ -192,19 +194,19 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
 
     # --- dates ---
     quote = by_name.get("get_option_contract")
-    allowed_dates = {dt.date.fromisoformat(request["expiration"]), dt.date.today()}
+    allowed_dates = {dt.date.fromisoformat(request["expiration"]), clock.today()}
     if earnings_date:
         allowed_dates.add(earnings_date)
     if quote:
         last = quote.result.get("data_quality", {}).get("quote", {}).get("last_trade", "")
-        allowed_dates |= _report_dates(last, dt.date.today().year)
+        allowed_dates |= _report_dates(last, clock.today().year)
     for c in calls:  # the alternative search may select a different expiration
         if c.name == "search_alternatives":
             allowed_dates |= {dt.date.fromisoformat(m.group(0)) for m in ISO_DATE.finditer(json.dumps(c.result))}
     news = by_name.get("search_recent_news")
     for item in (news.result.get("results", []) if news else []):
-        allowed_dates |= _report_dates(item.get("date", ""), dt.date.today().year)
-        allowed_dates |= _report_dates(item.get("headline", ""), dt.date.today().year)
+        allowed_dates |= _report_dates(item.get("date", ""), clock.today().year)
+        allowed_dates |= _report_dates(item.get("headline", ""), clock.today().year)
     wrong_dates = sorted(_report_dates(report, int(request["expiration"][:4])) - allowed_dates)
     for d in wrong_dates:
         v.issues.append(f"Date not returned by any tool: {d.isoformat()}"

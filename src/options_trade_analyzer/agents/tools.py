@@ -9,7 +9,7 @@ import json
 
 from langchain_core.tools import BaseTool, tool
 
-from options_trade_analyzer import config
+from options_trade_analyzer import clock, config
 from options_trade_analyzer.analytics import data_quality, options_math, strategies, trend
 from options_trade_analyzer.analytics.strategies import Leg
 from options_trade_analyzer.agents import tot_search
@@ -26,7 +26,7 @@ def _json(data: dict) -> str:
 
 def _years_to_expiry(expiration: str) -> float:
     # Count to the expiration day's close, so a contract expiring today still has a little time left.
-    return max((dt.date.fromisoformat(expiration) - dt.date.today()).days + 0.5, 0.5) / 365
+    return max((dt.date.fromisoformat(expiration) - clock.today()).days + 0.5, 0.5) / 365
 
 
 @tool
@@ -36,7 +36,7 @@ def get_option_contract(ticker: str, option_type: str, strike: float, expiration
     if option_type not in ("call", "put"):
         return _json({"error": "option_type must be 'call' or 'put'"})
     try:
-        if dt.date.fromisoformat(expiration) < dt.date.today():
+        if dt.date.fromisoformat(expiration) < clock.today():
             return _json({"error": f"expiration {expiration} is in the past"})
     except ValueError:
         return _json({"error": "expiration must be YYYY-MM-DD"})
@@ -58,7 +58,7 @@ def get_option_contract(ticker: str, option_type: str, strike: float, expiration
     volume = int(row["volume"]) if row["volume"] == row["volume"] else 0
     open_interest = int(row["openInterest"]) if row["openInterest"] == row["openInterest"] else 0
     spread_pct = round((ask - bid) / premium * 100, 1) if premium and bid > 0 and ask > 0 else None
-    days = (dt.date.fromisoformat(expiration) - dt.date.today()).days
+    days = (dt.date.fromisoformat(expiration) - clock.today()).days
     expiry = dt.date.fromisoformat(expiration)
     earnings = provider.get_next_earnings_date(ticker)
     ex_dividend = provider.get_next_ex_dividend_date(ticker)
@@ -82,7 +82,7 @@ def get_option_contract(ticker: str, option_type: str, strike: float, expiration
         "breakeven": round(options_math.breakeven(option_type, strike, premium), 2),
         "max_loss_per_contract": round(premium * 100, 2),
         "data_quality": {
-            "quote": data_quality.quote_freshness(row["lastTradeDate"].to_pydatetime(), dt.datetime.now(dt.timezone.utc)),
+            "quote": data_quality.quote_freshness(row["lastTradeDate"].to_pydatetime(), clock.now()),
             "liquidity": data_quality.liquidity_rating(spread_pct, volume, open_interest),
             "model_vs_market": data_quality.model_vs_market(model_price, bid, ask),
             "model_assumption_flags": data_quality.model_assumption_flags(

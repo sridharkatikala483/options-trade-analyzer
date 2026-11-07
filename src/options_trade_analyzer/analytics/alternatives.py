@@ -14,6 +14,7 @@ from typing import Literal
 
 import pandas as pd
 
+from options_trade_analyzer import clock
 from options_trade_analyzer.analytics import options_math, strategies
 from options_trade_analyzer.analytics.data_quality import liquidity_rating
 from options_trade_analyzer.analytics.strategies import Leg
@@ -87,7 +88,7 @@ class Market:
 
     def __init__(self, provider, ticker: str, rate: float, today: dt.date | None = None):
         self.provider, self.ticker, self.rate = provider, ticker, rate
-        self.today = today or dt.date.today()
+        self.today = today or clock.today()
         self.spot = float(provider.get_quote(ticker))
         self.expirations = sorted(provider.get_expirations(ticker))
         self._chains: dict[str, dict[str, dict[float, Quote]]] = {}

@@ -6,9 +6,11 @@ Coverage is highly redundant (one story, many outlets), which is why retrieval o
 import urllib.request
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from email.utils import parsedate_to_datetime
 from urllib.parse import quote_plus
+
+from options_trade_analyzer import clock
 
 FEEDS = [
     "https://feeds.finance.yahoo.com/rss/2.0/headline?s={ticker}&region=US&lang=en-US",
@@ -25,7 +27,7 @@ class Headline:
 
     @property
     def age_days(self) -> float:
-        return (datetime.now(timezone.utc) - self.published).total_seconds() / 86400
+        return (clock.now() - self.published).total_seconds() / 86400
 
 
 def _parse(xml_bytes: bytes, default_source: str) -> list[Headline]:
@@ -45,8 +47,13 @@ def _parse(xml_bytes: bytes, default_source: str) -> list[Headline]:
     return headlines
 
 
+REPLAY: dict[str, list[Headline]] | None = None  # set by a snapshot replay (data/snapshot.py)
+
+
 def fetch_headlines(ticker: str, timeout: float = 15) -> list[Headline]:
     """All headlines from every feed that responds; a failing feed is skipped, not fatal."""
+    if REPLAY is not None:
+        return list(REPLAY.get(ticker, []))
     headlines = []
     for url, name in zip(FEEDS, ["Yahoo Finance", "Google News"]):
         request = urllib.request.Request(url.format(ticker=quote_plus(ticker)), headers={"User-Agent": "Mozilla/5.0"})

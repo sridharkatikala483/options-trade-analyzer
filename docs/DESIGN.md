@@ -296,4 +296,9 @@ checks that score it, so its first-draft scores are reported too, and reports ar
 - [ ] Recommendation-quality rubric for the with/without-ToT reports (Checkpoint 4 feedback)
 - [ ] SQLite long-term memory and comparison with past analyses
 - [ ] Report shown in the dashboard
-- [ ] Scenario snapshots, answer keys and evaluation harness (with/without Critic)
+- [x] Market-data snapshots (`data/snapshot.py`, `scripts/record_snapshot.py`, `clock.py`): record the 10
+      evaluation contracts once (quotes, chains the ToT search can visit, earnings, 6m/2y history, headlines;
+      0.3 MB), replay with `DATA_PROVIDER=snapshot`, clock frozen at the recording time. Two replays of
+      `evaluate_tot.py --no-llm` gave identical results. First snapshot: `data/snapshots/2026-11-06.json.gz`
+- [ ] Answer keys and the evaluation harness on the snapshot: single agent vs team, with and without the
+      LLM Critic

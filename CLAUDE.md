@@ -21,7 +21,10 @@ the package uses a `src/` layout and is installed into the venv by `uv sync`.
 uv sync                                 # install/refresh dependencies
 uv run pytest                           # all tests
 uv run pytest tests/test_options_math.py::test_breakeven   # one test
-uv run python scripts/check_setup.py    # live check: yfinance data + configured LLM
+uv run python scripts/record_snapshot.py              record the evaluation contracts' market data -> data/snapshots/<date>.json.gz
+scripts/check_setup.py    # live check: yfinance data + configured LLM
+uv run python scripts/record_snapshot.py   # record market data for the evaluation contracts (live, ~1 min)
+DATA_PROVIDER=snapshot SNAPSHOT_PATH=data/snapshots/2026-11-06.json.gz uv run python scripts/evaluate.py ...  # replay
 uv run streamlit run app.py             # dashboard at http://localhost:8501
 uv add <pkg>  /  uv add --dev <pkg>     # add a dependency (updates pyproject.toml and uv.lock)
 ```
@@ -34,8 +37,10 @@ uv add <pkg>  /  uv add --dev <pkg>     # add a dependency (updates pyproject.to
 app.py                                  Streamlit + Plotly dashboard (single-contract view, payoff chart)
 src/options_trade_analyzer/
   config.py                             reads .env at import; get_llm() is the only LLM factory
+  clock.py                              today()/now(): the only clock; a snapshot replay freezes it
   data/provider.py                      MarketDataProvider Protocol + YFinanceProvider
   data/__init__.py                      get_provider(name) factory
+  data/snapshot.py                      RecordingProvider (record live calls) + SnapshotProvider (replay, freezes clock)
   data/news.py                          recent headlines from public RSS (Yahoo Finance, Google News)
   analytics/options_math.py             Black-Scholes price, Greeks, breakeven, payoff (via vollib)
   analytics/data_quality.py             quote freshness, liquidity rating, model-vs-market gap, assumption flags
@@ -65,13 +70,14 @@ tests/test_retrieval.py                 offline chunking, search, similarity flo
 tests/test_verifier.py                  verifier catches the real flawed run and passes a faithful report
 tests/test_tot.py                       ToT search on a synthetic Black-Scholes chain (scoring, pruning, beam)
 tests/test_critic.py                    LLM Critic reply parsing (owners, failures, cap) with a stand-in LLM
+tests/test_snapshot.py                  record/replay round trip; a later replay gives identical tool output
 tests/test_team.py                      team wiring with stand-in LLM calls: join, routing, failures, stop
 tests/test_risk_metrics.py              risk-adjusted measures on the same synthetic chain
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
 scripts/evaluate.py                     10 contracts x 3 setups, resumable -> docs/evaluation/ (hours on local qwen3)
 scripts/evaluate_tot.py                 ToT vs fixed spread vs exhaustive, plus risk-adjusted measures -> docs/evaluation/tot_summary*.md
 data/knowledge/                         synthetic options-education notes (the RAG corpus)
-data/snapshots/                         saved market data for repeatable evaluation scenarios
+data/snapshots/                         recorded market data (gzipped JSON) for repeatable evaluation runs
 ```
 
 Key seams to keep intact:
@@ -110,10 +116,12 @@ Key seams to keep intact:
   unparseable proposals fall back to the default choices and are counted in the tool output.
 - `FINNHUB_API_KEY` and the Schwab keys are defined in `.env.example` but not used by code yet.
 - Tests should be deterministic and offline (no network, no LLM). Use `data/snapshots/` for market data.
+- Never call `date.today()` or `datetime.now()` directly: use `clock.today()` / `clock.now()`, or a snapshot
+  replay will see the wrong day (days to expiry, quote age and news age all drift).
 - Never commit `.env`, `data/history.db` (planned SQLite long-term memory), or `.streamlit/secrets.toml`.
 - Style: short module docstrings, type hints, small functions, `Literal["call", "put"]` for option type.
 
 ## Planned next steps (from DESIGN.md)
 
-Snapshots for repeatable runs → evaluate single agent vs team, with and without the LLM Critic → SQLite memory → report in the dashboard → evaluation harness
+Evaluate single agent vs team on the snapshot, with and without the LLM Critic → SQLite memory → report in the dashboard → evaluation harness
 (scenarios with answer keys, run with and without the Critic).

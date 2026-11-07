@@ -29,7 +29,7 @@ import time
 from dataclasses import asdict
 from datetime import date, datetime
 
-from options_trade_analyzer import config
+from options_trade_analyzer import clock, config
 from options_trade_analyzer.agents import tools
 from options_trade_analyzer.agents.options_agent import analyze_contract
 from options_trade_analyzer.agents.team import analyze_contract_team
@@ -62,7 +62,7 @@ def resolve(provider, ticker: str, option_type: str, otm: float, days: int) -> d
     """Turn a spec into a listed contract: first expiry at least `days` out, strike nearest the target."""
     spot = provider.get_quote(ticker)
     expiry = next(e for e in provider.get_expirations(ticker)
-                  if (date.fromisoformat(e) - date.today()).days >= days)
+                  if (date.fromisoformat(e) - clock.today()).days >= days)
     target = spot * (1 + otm) if option_type == "call" else spot * (1 - otm)
     chain = provider.get_option_chain(ticker, expiry)[f"{option_type}s"]
     strike = float(min(chain["strike"], key=lambda s: abs(s - target)))
