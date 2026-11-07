@@ -71,7 +71,7 @@ Key seams to keep intact:
   `ANTHROPIC_API_KEY`). Don't instantiate `ChatOllama`/`ChatAnthropic` elsewhere.
 - **Data access:** go through `get_provider(config.DATA_PROVIDER)` and the `MarketDataProvider`
   interface, never call `yfinance` directly outside `provider.py`. A new source (Schwab, a snapshot
-  replay provider) is a new class implementing the same four methods, registered in `get_provider`.
+  replay provider) is a new class implementing the same six methods, registered in `get_provider`.
 - **Embeddings:** `config.get_embeddings()` (local Ollama `nomic-embed-text`; run `ollama pull
   nomic-embed-text`). Knowledge index rebuilds automatically when `data/knowledge/*.md` changes.
 - **Tools** return JSON strings and report bad input as `{"error": ...}` rather than raising, so the

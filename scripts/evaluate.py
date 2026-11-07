@@ -6,6 +6,8 @@ Setups
   no_retrieval        core tools only, no verification loop
   retrieval           + knowledge and news retrieval, no verification loop
   retrieval_verified  + retrieval, with the completeness/verification loop (max 2 revisions)
+  retrieval_verified_tot  same, with the Tree-of-Thought alternative search instead of the fixed spread
+                      (Checkpoint 4; run with --setups retrieval_verified,retrieval_verified_tot --out tot)
 
 Metrics per run: tool-use completeness, unsupported numbers, date errors, liquidity contradictions
 (general guidance misapplied to this contract), citation accuracy, recommendations, revisions,
@@ -14,6 +16,7 @@ inputs. Results are saved after every run, so an interrupted run resumes where i
 
 Run with:  uv run python scripts/evaluate.py                # all contracts, all setups
            uv run python scripts/evaluate.py --limit 2      # quick check
+           --out NAME writes results_NAME.json / summary_NAME.md (fresh contracts, separate from the default)
 """
 
 import argparse
@@ -42,6 +45,7 @@ SETUPS = {
     "no_retrieval": {"use_retrieval": False, "verify_report": False},
     "retrieval": {"use_retrieval": True, "verify_report": False},
     "retrieval_verified": {"use_retrieval": True, "verify_report": True},
+    "retrieval_verified_tot": {"use_retrieval": True, "verify_report": True, "use_tot": True},
 }
 METRICS = ["tool_completeness", "unsupported_numbers", "date_errors", "liquidity_contradictions",
            "invalid_citations", "citations", "recommendation"]
@@ -101,14 +105,14 @@ def summarize(runs: list[dict]) -> str:
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for setup in SETUPS:
-        for stage in (["first_draft", "final"] if setup == "retrieval_verified" else ["final"]):
+        for stage in (["first_draft", "final"] if SETUPS[setup]["verify_report"] else ["final"]):
             rs = [r for r in runs if r["setup"] == setup]
             if not rs:
                 continue
             m = [r[stage] for r in rs]
             cites = sum(x["citations"] for x in m)
             bad = sum(x["invalid_citations"] for x in m)
-            label = setup if setup != "retrieval_verified" else f"{setup} ({stage.replace('_', ' ')})"
+            label = f"{setup} ({stage.replace('_', ' ')})" if SETUPS[setup]["verify_report"] else setup
             lines.append(
                 f"| {label} | {len(rs)} | {sum(x['tool_completeness'] for x in m) / len(m):.0%} "
                 f"| {sum(x['unsupported_numbers'] for x in m)} | {sum(x['date_errors'] for x in m)} "
@@ -127,9 +131,10 @@ def summarize(runs: list[dict]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def main(limit: int | None, setups: list[str]) -> None:
+def main(limit: int | None, setups: list[str], out: str | None = None) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    results_file = OUT_DIR / "results.json"
+    suffix = f"_{out}" if out else ""
+    results_file = OUT_DIR / f"results{suffix}.json"
     runs = json.loads(results_file.read_text()) if results_file.exists() else []
     done = {(json.dumps(r["contract"], sort_keys=True), r["setup"]) for r in runs}
 
@@ -153,13 +158,14 @@ def main(limit: int | None, setups: list[str]) -> None:
                 print(f"  failed: {exc}", flush=True)
                 continue
             results_file.write_text(json.dumps(runs, indent=1, default=str))
-            (OUT_DIR / "summary.md").write_text(summarize(runs))
-    print(f"Done. Summary: {OUT_DIR / 'summary.md'}")
+            (OUT_DIR / f"summary{suffix}.md").write_text(summarize(runs))
+    print(f"Done. Summary: {OUT_DIR / f'summary{suffix}.md'}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--limit", type=int, default=None, help="only the first N contracts")
     parser.add_argument("--setups", default=",".join(SETUPS), help="comma-separated subset of setups")
+    parser.add_argument("--out", default=None, help="name for separate results/summary files")
     args = parser.parse_args()
-    main(args.limit, args.setups.split(","))
+    main(args.limit, args.setups.split(","), args.out)
