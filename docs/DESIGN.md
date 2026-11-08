@@ -295,7 +295,11 @@ checks that score it, so its first-draft scores are reported too, and reports ar
 - [ ] LLM vs rule proposer on a larger, more diverse contract set (Checkpoint 4 feedback)
 - [ ] Recommendation-quality rubric for the with/without-ToT reports (Checkpoint 4 feedback)
 - [ ] SQLite long-term memory and comparison with past analyses
-- [ ] Report shown in the dashboard
+- [x] Report shown in the dashboard (`app.py`): "Run AI analysis" runs the team with live per-agent progress;
+      report, each agent's findings and tool calls, the Critic's checks (first draft vs final) and fixes sent,
+      run time and tokens; the selected alternative drawn on the payoff chart; with DATA_PROVIDER=snapshot the
+      sidebar offers the recorded contracts. The run is a background job (`jobs.py`): a reload or click does
+      not cancel it, progress refreshes every 3 s with a "now working on" line, one run at a time
 - [x] Market-data snapshots (`data/snapshot.py`, `scripts/record_snapshot.py`, `clock.py`): record the 10
       evaluation contracts once (quotes, chains the ToT search can visit, earnings, 6m/2y history, headlines;
       0.3 MB), replay with `DATA_PROVIDER=snapshot`, clock frozen at the recording time. Two replays of

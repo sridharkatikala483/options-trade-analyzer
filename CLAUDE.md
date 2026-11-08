@@ -21,8 +21,7 @@ the package uses a `src/` layout and is installed into the venv by `uv sync`.
 uv sync                                 # install/refresh dependencies
 uv run pytest                           # all tests
 uv run pytest tests/test_options_math.py::test_breakeven   # one test
-uv run python scripts/record_snapshot.py              record the evaluation contracts' market data -> data/snapshots/<date>.json.gz
-scripts/check_setup.py    # live check: yfinance data + configured LLM
+uv run python scripts/check_setup.py    # live check: yfinance data + configured LLM
 uv run python scripts/record_snapshot.py   # record market data for the evaluation contracts (live, ~1 min)
 DATA_PROVIDER=snapshot SNAPSHOT_PATH=data/snapshots/2026-11-06.json.gz uv run python scripts/evaluate.py ...  # replay
 uv run streamlit run app.py             # dashboard at http://localhost:8501
@@ -34,10 +33,12 @@ uv add <pkg>  /  uv add --dev <pkg>     # add a dependency (updates pyproject.to
 ## Layout and architecture
 
 ```
-app.py                                  Streamlit + Plotly dashboard (single-contract view, payoff chart)
+app.py                                  Streamlit dashboard: contract view, payoff chart (+ alternative), "Run AI
+                                        analysis" with live agent progress, report, findings, Critic checks
 src/options_trade_analyzer/
   config.py                             reads .env at import; get_llm() is the only LLM factory
   clock.py                              today()/now(): the only clock; a snapshot replay freezes it
+  jobs.py                               background analysis runs for the dashboard (survive reloads, one at a time)
   data/provider.py                      MarketDataProvider Protocol + YFinanceProvider
   data/__init__.py                      get_provider(name) factory
   data/snapshot.py                      RecordingProvider (record live calls) + SnapshotProvider (replay, freezes clock)
@@ -63,6 +64,7 @@ src/options_trade_analyzer/
   agents/critic.py                      LLM Critic: judgment checklist after the rules pass; JSON reply names the owner
   agents/verifier.py                    rule-based report checks: tool completeness, numbers, dates,
                                         liquidity wording, citations, no advice
+scripts/record_snapshot.py              record the evaluation contracts' market data -> data/snapshots/<date>.json.gz
 scripts/check_setup.py                  environment smoke test (exits 1 on failure)
 tests/test_options_math.py              textbook-value tests for the math
 tests/test_reliability.py               independent Black-Scholes cross-check, data-quality and strategy tests
@@ -71,6 +73,7 @@ tests/test_verifier.py                  verifier catches the real flawed run and
 tests/test_tot.py                       ToT search on a synthetic Black-Scholes chain (scoring, pruning, beam)
 tests/test_critic.py                    LLM Critic reply parsing (owners, failures, cap) with a stand-in LLM
 tests/test_snapshot.py                  record/replay round trip; a later replay gives identical tool output
+tests/test_jobs.py                      background jobs: progress wording, one at a time, errors kept
 tests/test_team.py                      team wiring with stand-in LLM calls: join, routing, failures, stop
 tests/test_risk_metrics.py              risk-adjusted measures on the same synthetic chain
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
@@ -123,5 +126,5 @@ Key seams to keep intact:
 
 ## Planned next steps (from DESIGN.md)
 
-Evaluate single agent vs team on the snapshot, with and without the LLM Critic → SQLite memory → report in the dashboard → evaluation harness
+Evaluate single agent vs team on the snapshot, with and without the LLM Critic → SQLite memory → evaluation harness
 (scenarios with answer keys, run with and without the Critic).

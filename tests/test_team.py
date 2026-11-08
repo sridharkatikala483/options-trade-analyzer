@@ -185,3 +185,11 @@ def test_a_critic_that_never_agrees_still_stops_at_the_cap(script):
     result = run()
     assert result.revisions == team.MAX_REVISIONS and s.calls.count("llm_critic") == team.MAX_REVISIONS + 1
     assert not result.verification.passed
+
+
+def test_progress_is_reported_as_each_agent_finishes(script):
+    script()
+    steps = []
+    run(on_step=lambda node, update: steps.append(node))
+    assert steps[0] == "coordinator" and set(steps[1:3]) == {"options_analyst", "market_context"}
+    assert steps[3:] == ["risk_strategist", "writer", "critic"]

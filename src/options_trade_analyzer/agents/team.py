@@ -22,7 +22,7 @@ import json
 import operator
 import re
 from dataclasses import dataclass, field
-from typing import Annotated, TypedDict
+from typing import Annotated, Callable, TypedDict
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.graph import END, START, StateGraph
@@ -392,15 +392,25 @@ class Team:
 
 def analyze_contract_team(ticker: str, option_type: str, strike: float, expiration: str,
                           use_tot: bool = True, max_revisions: int = MAX_REVISIONS,
-                          use_llm_critic: bool = True) -> AnalysisResult:
-    """Run the multi-agent team on one contract. Market data is frozen for the run."""
+                          use_llm_critic: bool = True,
+                          on_step: Callable[[str, dict], None] | None = None) -> AnalysisResult:
+    """Run the multi-agent team on one contract. Market data is frozen for the run.
+
+    on_step(node, update) is called as each agent finishes, for live progress (the dashboard)."""
     request = {"ticker": ticker, "option_type": option_type, "strike": strike, "expiration": expiration}
     team = Team(request, use_tot, max_revisions, use_llm_critic)
     previous = tools.provider
     tools.provider = CachingProvider(previous)  # one snapshot: every agent sees the same prices
+    state = {}
     try:
-        state = team.build_graph().invoke({"request": request, "runs": {}, "revisions": 0},
-                                          config={"recursion_limit": 50})
+        for mode, chunk in team.build_graph().stream({"request": request, "runs": {}, "revisions": 0},
+                                                     config={"recursion_limit": 50},
+                                                     stream_mode=["updates", "values"]):
+            if mode == "values":
+                state = chunk
+            elif on_step:
+                for node, update in chunk.items():
+                    on_step(node, update or {})
     finally:
         tools.provider = previous
     return team.result(state)
