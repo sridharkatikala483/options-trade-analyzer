@@ -15,7 +15,8 @@ REQUEST = {"ticker": "TEST", "option_type": "call", "strike": 105.0, "expiration
 CONTRACT = {"ticker": "TEST", "stock_price": 100.0, "premium": 6.83, "breakeven": 111.83,
             "max_loss_per_contract": 683.0, "implied_volatility_pct": 30.0,
             "data_quality": {"liquidity": {"rating": "fair"}}}
-GOOD_REPORT = "Summary: the premium is $6.83 and the breakeven is $111.83. Lower risk is not a profit."
+GOOD_REPORT = ("Summary: the premium is $6.83 and the breakeven is $111.83. Lower risk does not guarantee a profit. "
+               "Black-Scholes only approximates this American-style option.")
 
 
 def obs(agent, tool, result):

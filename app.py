@@ -29,6 +29,7 @@ AGENT_TITLES = {"options_analyst": "Options Analyst", "market_context": "Market 
 CHECKS = [("Required tools used", "tool_completeness", "{:.0%}"), ("Unsupported numbers", "unsupported_numbers", "{}"),
           ("Date errors", "date_errors", "{}"), ("Liquidity contradictions", "liquidity_contradictions", "{}"),
           ("Invalid citations", "invalid_citations", "{}"), ("Recommendations", "recommendation", "{}"),
+          ("Required statements missing or wrong", "statement_issues", "{}"),
           ("Judgment issues (LLM Critic)", "judgment_issues", "{}")]
 LEG = re.compile(r"(buy|sell) (\d+) ([\d.]+) (call|put) @ ([\d.]+)")
 

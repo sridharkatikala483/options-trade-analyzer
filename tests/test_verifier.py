@@ -8,6 +8,7 @@ remark contradicting the 'good' rating.
 
 import json
 
+from options_trade_analyzer.agents import verifier
 from options_trade_analyzer.agents.verifier import verify
 
 REQUEST = {"ticker": "AAPL", "option_type": "call", "strike": 350, "expiration": "2026-11-06"}
@@ -74,7 +75,8 @@ Main risks: after a volatility drop to 19.98% the scenario model price is $4.51 
 time decay [KB: time-decay-theta#2].
 Lower-risk alternative: the 350/360 bull call spread costs $405, max loss $405, max gain $595,
 breakeven $354.05. Lower risk does not guarantee a profit.
-What to watch: earnings setup [News: Yahoo Finance, 2026-10-24]."""
+What to watch: earnings setup [News: Yahoo Finance, 2026-10-24].
+Limits: Black-Scholes only approximates this American-style option."""
 
 
 def test_flawed_run_is_caught():
@@ -142,3 +144,25 @@ def test_wrong_day_count_is_flagged_but_correct_one_passes():
     assert verify(GOOD_REPORT, FULL_TRACE, REQUEST, use_retrieval=True).passed  # "13 days" is days_to_expiry
     v = verify(GOOD_REPORT + "\nEarnings come 12 days before expiry.", FULL_TRACE, REQUEST, use_retrieval=True)
     assert any("12 days" in issue for issue in v.issues)
+
+
+
+# --- required statements (the answer keys found these missing in about half of qwen3's reports) ---
+
+LIMITS = "Black-Scholes only approximates this American-style option."
+NO_PROFIT = "Lower risk does not guarantee a profit."
+
+
+def test_missing_model_limits_and_no_guarantee_are_flagged():
+    problems = verifier.statement_problems("Summary: a call.", has_alternative=True)
+    assert len(problems) == 2 and all(p.startswith("Missing statement") for p in problems)
+    assert verifier.statement_problems(f"{LIMITS} {NO_PROFIT}", has_alternative=True) == []
+
+
+def test_no_guarantee_is_required_only_when_an_alternative_was_searched():
+    assert verifier.statement_problems(LIMITS, has_alternative=False) == []
+
+
+def test_a_missing_statement_goes_back_to_the_writer():
+    from options_trade_analyzer.agents.team import route
+    assert list(route(verifier.statement_problems("Summary.", has_alternative=True))) == ["writer"]

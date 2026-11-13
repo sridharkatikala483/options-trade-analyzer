@@ -40,10 +40,16 @@ Rules:
 - State the stock price, spread, volume and open interest exactly as get_option_contract returned them.
 - If a tool returns an error, fix the input and try again.
 - Do not recommend buying, selling or any position size; describe risks only.
+- If earnings fall AFTER the expiration, they cannot affect this option: say exactly that once, and never
+  list them under Main risks or What to watch.
 
 Finish with a short report in plain language with exactly these headings:
 Summary, Key numbers, Data quality, Main risks, Lower-risk alternative, What to watch,
-Limits of this analysis.{citation_rule}"""
+Limits of this analysis.
+These two sentences are required (automatic checks reject a report without them):
+- End the Lower-risk alternative section with: "Lower risk does not guarantee a profit."
+- Start the Limits of this analysis section with: "Black-Scholes assumes European-style exercise, so for
+  this American-style option the model price is only an approximation."{citation_rule}"""
 
 COMPARE_STEP = "5. compare_strategies for the same contract. Use ONLY its numbers for the lower-risk alternative."
 

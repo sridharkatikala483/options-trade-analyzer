@@ -15,14 +15,14 @@ import re
 from dataclasses import asdict, dataclass
 
 from options_trade_analyzer.agents import tools
-from options_trade_analyzer.agents.verifier import (LOW_LIQUIDITY_WORDS, NUMBER, RECOMMENDATION, _decimals,
-                                                    _report_dates, _to_float)
+from options_trade_analyzer.agents.verifier import (LOW_LIQUIDITY_WORDS, NO_GUARANTEE, NUMBER, RECOMMENDATION,
+                                                    _decimals, _report_dates, _to_float, mentions_model_limits)
 
-SHORT_DAYS = 14  # with this few days left, a report must say how many
 SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
 NEGATION = re.compile(r"\b(not|no|cannot|can't|won't|doesn't|does not|unaffected|irrelevant|outside)\b", re.I)
 RISK_WORDS = re.compile(r"\b(risk|impact|affect|watch|could|may|might|hurt|crush)\w*", re.I)
-NO_GUARANTEE = re.compile(r"\b(not|no|never|doesn't|don't|isn't)\b[^.\n]{0,30}\bguarantee", re.I)
+
+SHORT_DAYS = 14  # with this few days left, a report must say how many
 GOOD_LIQUIDITY = re.compile(r"\b(good|high|ample|strong|healthy) liquidity\b|\bliquidity is (good|high|fine)\b|"
                             r"\b(highly|very) liquid\b|\beasy to trade\b", re.I)
 STALE_WORDS = re.compile(r"\bclosed\b|\bhours? old\b|\bstale\b|\bdelayed\b|\bnot (live|real[- ]time)\b|\blow confidence\b",
@@ -144,7 +144,7 @@ def check(item_id: str, report: str, facts: dict, contract: dict, trace: list[di
     if item_id == "time_decay":
         return "time decay" in low or "theta" in low
     if item_id == "model_limits":
-        return "black-scholes" in low and any(w in low for w in ("american", "early exercise", "approximat"))
+        return mentions_model_limits(report)
     if item_id == "no_guarantee":
         return bool(NO_GUARANTEE.search(report))
     if item_id in ("alternative", "alternative_expiration"):

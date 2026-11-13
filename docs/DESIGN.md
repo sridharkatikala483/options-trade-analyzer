@@ -277,8 +277,13 @@ Snapshot `data/snapshots/2026-11-06.json.gz`, 10 contracts x 3 setups, qwen3:8b;
 - The team with the LLM Critic is the most reliable: every final report passed and first drafts needed the
   fewest fixes. Both teams state more answer-key facts than the single agent, with smaller contexts per agent.
 - Gaps shared by all setups: Black-Scholes vs American-style limits missing (6-7 reports each; about 2 are
-  wordings the matcher misses), earnings after expiry listed as a risk (2-3 each); the single agent often
-  omits "lower risk does not guarantee a profit" (8 of 10). These point to a Writer prompt fix.
+  wordings the matcher misses), earnings after expiry listed as a risk (2-3 each by the matcher; a hand check
+  found about 4 real cases in all, the rest correct sentences such as "crush occurs only if earnings are before
+  expiry"); the single agent often omits "lower risk does not guarantee a profit" (8 of 10).
+- Fix (after the run): both prompts now give the two required sentences a fixed place (end of Lower-risk
+  alternative, start of Limits), and the rule verifier rejects a report missing either one (`statement_issues`,
+  routed to the Writer). On the 30 reports it would have sent back 25. Earnings after expiry stays with the LLM
+  Critic (check 2 made more specific): a word rule flagged about as many correct sentences as mistakes.
 - The rule-Critic-only team cited sources rarely (4 citations in 10 reports vs 12 and 35).
 - Runner fix from the run: qwen3 occasionally loops in its thinking; with tokens still streaming the 600 s
   timeout never fires (one call ran 4+ hours past 100,000 tokens). `get_llm` now caps each reply at 8,192
@@ -332,5 +337,6 @@ Snapshot `data/snapshots/2026-11-06.json.gz`, 10 contracts x 3 setups, qwen3:8b;
       `evaluate_tot.py --no-llm` gave identical results. First snapshot: `data/snapshots/2026-11-06.json.gz`
 - [x] Answer keys built from the snapshot (`answer_keys.py`, `scripts/score_reports.py`) and the comparison:
       single agent vs team, with and without the LLM Critic (results above)
-- [ ] Writer prompt fix for the shared gaps (model limits, earnings after expiry); repeat the comparison on
-      Claude Haiku
+- [x] Fix for the shared gaps: required sentences in both prompts, a rule check for them, a sharper Critic
+      earnings check
+- [ ] Repeat the comparison with the fix (Claude Haiku: about 40 min, about 30 cents)

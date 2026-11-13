@@ -64,7 +64,7 @@ src/options_trade_analyzer/
                                         routing fixes to the owning agent; analyze_contract_team(...)
   agents/critic.py                      LLM Critic: judgment checklist after the rules pass; JSON reply names the owner
   agents/verifier.py                    rule-based report checks: tool completeness, numbers, dates,
-                                        liquidity wording, citations, no advice
+                                        liquidity wording, citations, no advice, required statements
 scripts/record_snapshot.py              record the evaluation contracts' market data -> data/snapshots/<date>.json.gz
 scripts/check_setup.py                  environment smoke test (exits 1 on failure)
 tests/test_options_math.py              textbook-value tests for the math
@@ -131,5 +131,5 @@ Key seams to keep intact:
 
 ## Planned next steps (from DESIGN.md)
 
-Writer prompt fix for the gaps the answer keys found → repeat the comparison on Claude Haiku → SQLite memory →
+Repeat the comparison with the required-statement fix on Claude Haiku → SQLite memory →
 LLM vs rule proposer on more contracts.

@@ -38,6 +38,11 @@ RECOMMENDATION = re.compile(
     r"\b(I|we) recommend\b|\byou should (buy|sell|enter|open)\b|\brecommend(ed)? (buying|selling)\b|"
     r"\bgood (trade|buy)\b", re.I)
 SMALL_INT_LIMIT = 12  # counts such as "2 rounds" or "3 risks" are not checked
+# Required statements (the answer keys found these missing in about half of qwen3's reports). Earnings after
+# expiry presented as a risk is left to the LLM Critic: a word rule flagged about as many correct sentences
+# ("crush occurs only if earnings are before expiry") as real mistakes on the 30 comparison reports.
+NO_GUARANTEE = re.compile(r"\b(not|no|never|doesn't|don't|isn't)\b[^.\n]{0,30}\bguarantee", re.I)
+ALTERNATIVE_TOOLS = ("compare_strategies", "search_alternatives")
 
 
 @dataclass
@@ -233,6 +238,10 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
     for c in news_invalid:
         v.issues.append(f"Citation [News: {c}] does not match a headline returned by search_recent_news.")
 
+    # --- required statements ---
+    statement_issues = statement_problems(report, any(c.name in ALTERNATIVE_TOOLS for c in calls))
+    v.issues += statement_issues
+
     # --- no advice ---
     if RECOMMENDATION.search(report):
         v.issues.append("Report contains a recommendation; describe risks only.")
@@ -251,8 +260,25 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
         "citation_accuracy": round(1 - (len(kb_invalid) + len(news_invalid)) / total_citations, 2)
         if total_citations else None,
         "recommendation": bool(RECOMMENDATION.search(report)),
+        "statement_issues": len(statement_issues),
     }
     return v
+
+
+def mentions_model_limits(report: str) -> bool:
+    low = report.lower()
+    return "black-scholes" in low and any(w in low for w in ("american", "early exercise", "approximat"))
+
+
+def statement_problems(report: str, has_alternative: bool) -> list[str]:
+    """Statements every report must make."""
+    problems = []
+    if not mentions_model_limits(report):
+        problems.append("Missing statement: Black-Scholes assumes European-style exercise, so for this "
+                        "American-style option the model price is only an approximation.")
+    if has_alternative and not NO_GUARANTEE.search(report):
+        problems.append("Missing statement: lower risk does not guarantee a profit.")
+    return problems
 
 
 def revision_request(v: Verification) -> str:

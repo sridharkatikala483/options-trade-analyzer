@@ -86,15 +86,20 @@ Rules:
 - Every number must be copied from the findings or evidence; never calculate or invent numbers.
 - Use the liquidity rating as given. Label volatility-drop prices as scenarios, not forecasts.
 - Give the alternative's expiration whenever it differs from the original contract's.
-- State that lower risk does not guarantee a profit. Never recommend buying, selling or a position size.
+- Never recommend buying, selling or a position size.
 - If a specialist failed, say which part of the analysis is missing.
 - The [tool] tags in the findings are for checking only: do not copy them into the report.
-- Earnings after the expiration cannot affect this option; say so instead of listing them as a risk.
+- If earnings fall AFTER the expiration, they cannot affect this option: say exactly that once, and never
+  list them under Main risks or What to watch.
 - Cite knowledge passages as [KB: source] and headlines as [News: source, date], only as they appear
   in the evidence.
 Write a short report in plain language with exactly these headings:
 Summary, Key numbers, Data quality, Main risks, Lower-risk alternative, What to watch,
-Limits of this analysis."""
+Limits of this analysis.
+These two sentences are required (automatic checks reject a report without them):
+- End the Lower-risk alternative section with: "Lower risk does not guarantee a profit."
+- Start the Limits of this analysis section with: "Black-Scholes assumes European-style exercise, so for
+  this American-style option the model price is only an approximation.\""""
 
 TOT_EVIDENCE_KEYS = ("outcome", "original", "selected", "runner_up", "scoring", "note")
 

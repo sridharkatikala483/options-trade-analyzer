@@ -29,7 +29,9 @@ given the evidence, and say which agent must fix each one.
 Check only these, and only flag clear problems you can point to in the evidence:
 1. A claim that contradicts the evidence or the findings (for example the liquidity rating, which side
    of the expiration the earnings fall on, or the trend direction).
-2. Earnings that fall after the expiration presented as a risk to this option.
+2. Earnings that fall after the expiration presented as a risk to this option, including any line saying
+   they "may impact" or "could affect" the stock or its volatility before expiry. Saying they fall after
+   expiry and cannot affect this option is correct; general background about earnings is not a problem.
 3. The alternative's expiration left out when it differs from the original contract's expiration.
 4. A volatility-drop price or a probability presented as a forecast instead of a scenario or estimate.
 5. No statement that lower risk does not guarantee a profit.

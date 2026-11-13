@@ -55,7 +55,7 @@ SETUPS = {
                           "llm_critic": False},
 }
 METRICS = ["tool_completeness", "unsupported_numbers", "date_errors", "liquidity_contradictions",
-           "invalid_citations", "citations", "recommendation"]
+           "invalid_citations", "citations", "recommendation", "statement_issues"]
 
 
 def resolve(provider, ticker: str, option_type: str, otm: float, days: int) -> dict:
@@ -108,9 +108,9 @@ def summarize(runs: list[dict]) -> str:
         "setup is also *revised* by the same verifier, so its final scores show what the loop achieves;",
         "its first-draft scores show the agent before verification.", "",
         "| Setup | Runs | Tool completeness | Unsupported numbers | Date errors | Liquidity contradictions "
-        "| Citation accuracy | Recommendations | Judgment issues (LLM Critic) | Avg revisions | Avg seconds "
+        "| Required statements missing or wrong | Citation accuracy | Recommendations | Judgment issues (LLM Critic) | Avg revisions | Avg seconds "
         "| Avg tokens (in/out) |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for setup in SETUPS:
         for stage in (["first_draft", "final"] if SETUPS[setup]["verify_report"] else ["final"]):
@@ -125,6 +125,7 @@ def summarize(runs: list[dict]) -> str:
                 f"| {label} | {len(rs)} | {sum(x['tool_completeness'] for x in m) / len(m):.0%} "
                 f"| {sum(x['unsupported_numbers'] for x in m)} | {sum(x['date_errors'] for x in m)} "
                 f"| {sum(x['liquidity_contradictions'] for x in m)} "
+                f"| {sum(x.get('statement_issues', 0) for x in m) if any('statement_issues' in x for x in m) else 'n/a'} "
                 f"| {f'{1 - bad / cites:.0%} of {cites}' if cites else 'n/a'} "
                 f"| {sum(bool(x['recommendation']) for x in m)} "
                 f"| {critic_cell(m)} "
