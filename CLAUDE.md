@@ -38,6 +38,7 @@ app.py                                  Streamlit dashboard: contract view, payo
 src/options_trade_analyzer/
   config.py                             reads .env at import; get_llm() is the only LLM factory
   clock.py                              today()/now(): the only clock; a snapshot replay freezes it
+  injection.py                          prompt-injection monitor for headlines: flagged ones are withheld, run held
   review.py                             Checkpoint 6 outcomes (shown / warning / held for review / refused), run log
                                         data/runs/*.jsonl (gitignored), review queue and reviewer decisions
   jobs.py                               background analysis runs for the dashboard (survive reloads, one at a time)
@@ -82,12 +83,14 @@ tests/test_snapshot.py                  record/replay round trip; a later replay
 tests/test_jobs.py                      background jobs: progress wording, one at a time, errors kept
 tests/test_team.py                      team wiring with stand-in LLM calls: join, routing, failures, stop
 tests/test_risk_metrics.py              risk-adjusted measures on the same synthetic chain
+tests/test_injection.py                 injection patterns, ordinary headlines pass, news tool withholds and holds the run
 tests/test_review.py                    outcome rules, run log round trip, review queue and decisions
 tests/test_input_risk.py                input risk flags and the chance-beyond-breakeven estimate
 tests/test_answer_keys.py               answer-key items and scoring on short reports with planted mistakes
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
 scripts/evaluate.py                     10 contracts x 3 setups, resumable -> docs/evaluation/ (hours on local qwen3)
 scripts/score_reports.py                score evaluation reports against answer keys -> docs/evaluation/quality_<name>.md
+scripts/injection_eval.py               injection monitor on planted (direct, paraphrased, held-out) and 914 real headlines
 scripts/evaluate_tot.py                 ToT vs fixed spread vs exhaustive, plus risk-adjusted measures -> docs/evaluation/tot_summary*.md
 data/knowledge/                         synthetic options-education notes (the RAG corpus)
 data/snapshots/                         recorded market data (gzipped JSON) for repeatable evaluation runs

@@ -355,4 +355,9 @@ Snapshot `data/snapshots/2026-11-06.json.gz`, 10 contracts x 3 setups, qwen3:8b;
       the team with the LLM Critic held 2 of 10, both because qwen3's Critic reply had no JSON. Timestamps use
       `clock.wall_now()` (a replay freezes market time, not review time). Not covered: a fallback-data trigger
       (no fallback signal exists yet) and refusal for the single agent (only the team reports an invalid request)
-- [ ] Injection monitor for headlines (planted-instruction tests)
+- [x] Injection monitor for headlines (`injection.py`, `scripts/injection_eval.py` -> `docs/evaluation/injection.md`):
+      every fresh headline is scanned before the agents see it; a flagged one is withheld (source, date and
+      reason only) and the run is held for review; prompts frame headlines as information, never instructions.
+      Results: 14 of 14 direct injections caught, 0 false alarms in 914 recorded headlines. Paraphrases: tuning
+      raised the tuning set from 0 to 6 of 6 but a held-out set written beforehand only from 0 to 1 of 6, so
+      word patterns overfit and plain-language attacks rely on the other layers (output checks, Critic)

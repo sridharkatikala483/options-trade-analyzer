@@ -4,7 +4,8 @@ Code, never the model, decides each run's outcome from the check results:
   shown               every check passed, no input risk flags
   shown_with_warning  every check passed, but the contract itself is risky (input_risk flags)
   needs_review        a check still fails after the revision rounds, the LLM Critic's reply was unreadable,
-                      a specialist failed, or the run stopped with an error: held for a person
+                      a specialist failed, a headline was withheld as a possible injection, or the run
+                      stopped with an error: held for a person
   refused             the request could not be analyzed (no such contract)
 
 Every dashboard run is appended to data/runs/runs.jsonl (gitignored) with its request, outcome, checks,
@@ -28,7 +29,7 @@ _lock = threading.Lock()
 
 
 def decide(issues: list[str], metrics: dict, findings: dict, flags: list, error: str | None = None,
-           invalid_request: str | None = None) -> tuple[Outcome, list[str]]:
+           invalid_request: str | None = None, withheld: int = 0) -> tuple[Outcome, list[str]]:
     """The outcome and the reasons a reviewer reads, from a finished run's checks."""
     if invalid_request:
         return "refused", [f"The request could not be analyzed: {invalid_request}"]
@@ -40,6 +41,9 @@ def decide(issues: list[str], metrics: dict, findings: dict, flags: list, error:
             reasons.append(f"The {name.replace('_', ' ')} failed, so part of the analysis is missing.")
     if issues:
         reasons.append(f"{len(issues)} check(s) still fail after the revision rounds.")
+    if withheld:
+        reasons.append(f"{withheld} headline(s) read like instructions to an AI and were withheld; check that "
+                       "the report was not steered.")
     if metrics.get("llm_critic_error"):
         reasons.append("The LLM Critic's reply could not be read, so the judgment review did not happen.")
     if reasons:
@@ -52,7 +56,20 @@ def decide_result(result, error: str | None = None) -> tuple[Outcome, list[str]]
     if result is None:
         return decide([], {}, {}, [], error=error or "no result")
     v = result.verification
-    return decide(v.issues, v.metrics, result.findings, result.flags, error, result.invalid_request)
+    return decide(v.issues, v.metrics, result.findings, result.flags, error, result.invalid_request,
+                  withheld_headlines(result.trace))
+
+
+def withheld_headlines(trace: list[dict]) -> int:
+    """Headlines the injection monitor withheld in this run (largest count of any news search)."""
+    counts = [0]
+    for step in trace:
+        if step["step"] == "Observation" and step.get("tool") == "search_recent_news":
+            try:
+                counts.append(len(json.loads(step["text"]).get("withheld", [])))
+            except (json.JSONDecodeError, AttributeError):
+                pass
+    return max(counts)
 
 
 # --- the log ---
