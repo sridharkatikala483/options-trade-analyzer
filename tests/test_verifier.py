@@ -202,3 +202,17 @@ def test_overconfident_wording_goes_back_to_the_writer():
     from options_trade_analyzer.agents.team import route
     issue = f"Overconfident wording; describe it as a possibility, scenario or estimate: \"x\""
     assert list(route([issue])) == ["writer"]
+
+
+# --- advice check: the disclaimer is not advice ---
+
+@pytest.mark.parametrize("text, advice", [
+    ("You should buy this call before earnings.", True),
+    ("We recommend buying the spread.", True),
+    ("This report does not recommend buying, selling, or any position size.", False),
+    ("It doesn't recommend selling the put.", False),
+    ("This is educational only and never recommends buying.", False),
+    ("This report is not advice. You should buy the call now.", True),  # negation in another sentence
+])
+def test_the_disclaimer_is_not_advice(text, advice):
+    assert verifier.recommends(text) is advice

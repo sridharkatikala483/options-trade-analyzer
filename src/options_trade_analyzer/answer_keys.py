@@ -15,7 +15,7 @@ import re
 from dataclasses import asdict, dataclass
 
 from options_trade_analyzer.agents import tools
-from options_trade_analyzer.agents.verifier import (LOW_LIQUIDITY_WORDS, NO_GUARANTEE, NUMBER, RECOMMENDATION,
+from options_trade_analyzer.agents.verifier import (LOW_LIQUIDITY_WORDS, NO_GUARANTEE, NUMBER, recommends,
                                                     _decimals, _report_dates, _to_float, mentions_model_limits)
 
 SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
@@ -177,7 +177,7 @@ def check(item_id: str, report: str, facts: dict, contract: dict, trace: list[di
     if item_id == "liquidity_overstated":
         return not GOOD_LIQUIDITY.search(report)
     if item_id == "recommendation":
-        return not RECOMMENDATION.search(report)
+        return not recommends(report)
     raise ValueError(f"unknown answer-key item: {item_id}")
 
 

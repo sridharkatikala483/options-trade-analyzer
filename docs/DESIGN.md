@@ -289,6 +289,33 @@ Snapshot `data/snapshots/2026-11-06.json.gz`, 10 contracts x 3 setups, qwen3:8b;
   timeout never fires (one call ran 4+ hours past 100,000 tokens). `get_llm` now caps each reply at 8,192
   tokens (`num_predict`); a whole normal run outputs under 13,000 tokens.
 
+## Re-run on Claude Haiku with the Checkpoint 6 guardrails
+
+Same snapshot and 10 contracts x 3 setups, `claude-haiku-5-5`, every guardrail on (results
+`docs/evaluation/summary_haiku_compare.md`, `quality_haiku_compare.md`).
+
+| | Single agent | Team, rule Critic only | Team + LLM Critic |
+| --- | --- | --- | --- |
+| Final reports passing every rule check | 10 of 10 | 10 of 10 | 10 of 10 |
+| Held for review | 0 | 0 | 0 |
+| Answer-key facts stated | 100% | 98% | 98% |
+| Answer-key mistakes | 0 | 1 flagged, a matcher false positive on hand check | 0 |
+| Average revision rounds | 0.2 | 0.6 | 0.5 |
+| Average seconds per run | 33 | 49 | 57 |
+| Average tokens per run (in / out) | 18,900 / 4,700 | 22,100 / 10,100 | 31,100 / 12,300 |
+
+- On a stronger model the single agent is as good as the team and faster and cheaper: the team's gains on
+  qwen3:8b (fewer untraced numbers, more facts) came from making up for a weak model. The team stays useful for
+  its structure (ownership, routing, parallel specialists) but is not needed for quality on Haiku.
+- Two answer-key items (model limits, "does not guarantee a profit") are now also enforced by the verifier, so
+  part of the 98-100% is by design rather than independent evidence.
+- The run found a verifier bug: the advice check matched Haiku's disclaimer "This report does not recommend
+  buying, selling, or any position size", so 7 of 30 first drafts were rejected and 4 runs ended held for
+  review. `recommends()` now ignores a match with a negation just before it (tests added); the 7 runs were
+  re-run. qwen3 never wrote that disclaimer, which is why the bug did not show before.
+- Every run is "shown with a warning" because every recorded quote is from a closed market.
+- Cost: about 721,000 input and 271,000 output tokens for the 30 runs.
+
 ## Technology choices
 
 - Python 3.12 via uv; LangGraph for orchestration; LangChain model integrations.
@@ -339,7 +366,8 @@ Snapshot `data/snapshots/2026-11-06.json.gz`, 10 contracts x 3 setups, qwen3:8b;
       single agent vs team, with and without the LLM Critic (results above)
 - [x] Fix for the shared gaps: required sentences in both prompts, a rule check for them, a sharper Critic
       earnings check
-- [ ] Repeat the comparison with the fix (Claude Haiku: about 40 min, about 30 cents)
+- [x] Repeat the comparison with the Checkpoint 6 guardrails on Claude Haiku (results above; found and fixed the
+      negated-advice false positive)
 - [x] Checkpoint 6 guardrails, part 1: overconfidence check in the rule verifier (certainty words, skipped when
       the sentence hedges; on the 30 saved reports it flags the one real case, "No risk (earnings are after
       expiration)", and nothing else; known gap: "guaranteed if ..." passes, left to Critic check 4) and input

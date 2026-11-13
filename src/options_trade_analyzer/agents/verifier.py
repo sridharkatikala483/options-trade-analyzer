@@ -37,6 +37,7 @@ LOW_LIQUIDITY_WORDS = re.compile(
 RECOMMENDATION = re.compile(
     r"\b(I|we) recommend\b|\byou should (buy|sell|enter|open)\b|\brecommend(ed)? (buying|selling)\b|"
     r"\bgood (trade|buy)\b", re.I)
+NEGATED = re.compile(r"\b(not|never|no|without)\b[^.!?\n]{0,25}$|n't\b[^.!?\n]{0,25}$", re.I)
 SMALL_INT_LIMIT = 12  # counts such as "2 rounds" or "3 risks" are not checked
 # Required statements (the answer keys found these missing in about half of qwen3's reports). Earnings after
 # expiry presented as a risk is left to the LLM Critic: a word rule flagged about as many correct sentences
@@ -256,7 +257,7 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
         v.issues.append(f"Overconfident wording; describe it as a possibility, scenario or estimate: \"{sentence[:160]}\"")
 
     # --- no advice ---
-    if RECOMMENDATION.search(report):
+    if recommends(report):
         v.issues.append("Report contains a recommendation; describe risks only.")
 
     total_citations = len(kb_cited) + len(news_cited)
@@ -272,11 +273,18 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
         "invalid_citations": len(kb_invalid) + len(news_invalid),
         "citation_accuracy": round(1 - (len(kb_invalid) + len(news_invalid)) / total_citations, 2)
         if total_citations else None,
-        "recommendation": bool(RECOMMENDATION.search(report)),
+        "recommendation": recommends(report),
         "statement_issues": len(statement_issues),
         "overconfident_sentences": len(overconfident),
     }
     return v
+
+
+def recommends(report: str) -> bool:
+    """True if the report gives advice. "This report does not recommend buying" is the disclaimer, not advice:
+    a match preceded by a negation in the same sentence does not count (Claude Haiku writes that disclaimer;
+    before this check, 7 of its 30 first drafts were rejected for it)."""
+    return any(not NEGATED.search(report[max(0, m.start() - 40):m.start()]) for m in RECOMMENDATION.finditer(report))
 
 
 def mentions_model_limits(report: str) -> bool:
