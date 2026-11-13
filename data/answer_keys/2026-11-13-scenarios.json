@@ -1,0 +1,947 @@
+[
+ {
+  "contract": {
+   "ticker": "WMT",
+   "option_type": "call",
+   "strike": 127.0,
+   "expiration": "2026-11-20"
+  },
+  "facts": {
+   "max_loss": 440.0,
+   "breakeven": 131.4,
+   "days_to_expiry": 7,
+   "liquidity": "good",
+   "earnings_date": "2026-11-19",
+   "earnings_before_expiry": true,
+   "market_closed": false,
+   "ex_dividend_flag": false
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 440 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 131.4"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as good"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "days_left",
+    "kind": "must",
+    "description": "Says only 7 days are left"
+   },
+   {
+    "id": "earnings_before",
+    "kind": "must",
+    "description": "Says earnings (2026-11-19) fall before expiry and describes a volatility drop"
+   },
+   {
+    "id": "liquidity_contradiction",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'good' hard to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ },
+ {
+  "contract": {
+   "ticker": "HD",
+   "option_type": "put",
+   "strike": 337.5,
+   "expiration": "2026-11-20"
+  },
+  "facts": {
+   "max_loss": 445.0,
+   "breakeven": 333.05,
+   "days_to_expiry": 7,
+   "liquidity": "fair",
+   "earnings_date": "2026-11-17",
+   "earnings_before_expiry": true,
+   "market_closed": false,
+   "ex_dividend_flag": false
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 445 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 333.05"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as fair"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "days_left",
+    "kind": "must",
+    "description": "Says only 7 days are left"
+   },
+   {
+    "id": "earnings_before",
+    "kind": "must",
+    "description": "Says earnings (2026-11-17) fall before expiry and describes a volatility drop"
+   },
+   {
+    "id": "liquidity_overstated",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'fair' easy to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ },
+ {
+  "contract": {
+   "ticker": "PANW",
+   "option_type": "call",
+   "strike": 335.0,
+   "expiration": "2026-11-27"
+  },
+  "facts": {
+   "max_loss": 1395.0,
+   "breakeven": 348.95,
+   "days_to_expiry": 14,
+   "liquidity": "poor",
+   "earnings_date": "2026-11-18",
+   "earnings_before_expiry": true,
+   "market_closed": false,
+   "ex_dividend_flag": false
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 1395 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 348.95"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as poor"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "days_left",
+    "kind": "must",
+    "description": "Says only 14 days are left"
+   },
+   {
+    "id": "earnings_before",
+    "kind": "must",
+    "description": "Says earnings (2026-11-18) fall before expiry and describes a volatility drop"
+   },
+   {
+    "id": "liquidity_overstated",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'poor' easy to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ },
+ {
+  "contract": {
+   "ticker": "ZM",
+   "option_type": "put",
+   "strike": 99.0,
+   "expiration": "2026-11-27"
+  },
+  "facts": {
+   "max_loss": 557.5,
+   "breakeven": 93.42,
+   "days_to_expiry": 14,
+   "liquidity": "poor",
+   "earnings_date": "2026-11-23",
+   "earnings_before_expiry": true,
+   "market_closed": false,
+   "ex_dividend_flag": false
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 557.5 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 93.42"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as poor"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "days_left",
+    "kind": "must",
+    "description": "Says only 14 days are left"
+   },
+   {
+    "id": "earnings_before",
+    "kind": "must",
+    "description": "Says earnings (2026-11-23) fall before expiry and describes a volatility drop"
+   },
+   {
+    "id": "liquidity_overstated",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'poor' easy to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ },
+ {
+  "contract": {
+   "ticker": "SPY",
+   "option_type": "call",
+   "strike": 753.0,
+   "expiration": "2026-11-13"
+  },
+  "facts": {
+   "max_loss": 71.5,
+   "breakeven": 753.72,
+   "days_to_expiry": 0,
+   "liquidity": "good",
+   "earnings_date": null,
+   "earnings_before_expiry": null,
+   "market_closed": false,
+   "ex_dividend_flag": false
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 71.5 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 753.72"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as good"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "days_left",
+    "kind": "must",
+    "description": "Says only 0 days are left"
+   },
+   {
+    "id": "liquidity_contradiction",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'good' hard to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ },
+ {
+  "contract": {
+   "ticker": "QQQ",
+   "option_type": "put",
+   "strike": 672.0,
+   "expiration": "2026-11-13"
+  },
+  "facts": {
+   "max_loss": 19.5,
+   "breakeven": 671.8,
+   "days_to_expiry": 0,
+   "liquidity": "good",
+   "earnings_date": null,
+   "earnings_before_expiry": null,
+   "market_closed": false,
+   "ex_dividend_flag": false
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 19.5 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 671.8"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as good"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "days_left",
+    "kind": "must",
+    "description": "Says only 0 days are left"
+   },
+   {
+    "id": "liquidity_contradiction",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'good' hard to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ },
+ {
+  "contract": {
+   "ticker": "TSLA",
+   "option_type": "call",
+   "strike": 490.0,
+   "expiration": "2026-11-20"
+  },
+  "facts": {
+   "max_loss": 4.0,
+   "breakeven": 490.04,
+   "days_to_expiry": 7,
+   "liquidity": "poor",
+   "earnings_date": "2027-01-27",
+   "earnings_before_expiry": false,
+   "market_closed": false,
+   "ex_dividend_flag": false
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 4 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 490.04"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as poor"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "days_left",
+    "kind": "must",
+    "description": "Says only 7 days are left"
+   },
+   {
+    "id": "earnings_after",
+    "kind": "must",
+    "description": "Says earnings (2027-01-27) fall after expiry"
+   },
+   {
+    "id": "earnings_as_risk",
+    "kind": "must_not",
+    "description": "Lists earnings after expiry as a risk to this option"
+   },
+   {
+    "id": "liquidity_overstated",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'poor' easy to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ },
+ {
+  "contract": {
+   "ticker": "AAPL",
+   "option_type": "put",
+   "strike": 315.0,
+   "expiration": "2026-11-27"
+  },
+  "facts": {
+   "max_loss": 26.5,
+   "breakeven": 314.74,
+   "days_to_expiry": 14,
+   "liquidity": "fair",
+   "earnings_date": "2027-01-28",
+   "earnings_before_expiry": false,
+   "market_closed": false,
+   "ex_dividend_flag": false
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 26.5 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 314.74"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as fair"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "days_left",
+    "kind": "must",
+    "description": "Says only 14 days are left"
+   },
+   {
+    "id": "earnings_after",
+    "kind": "must",
+    "description": "Says earnings (2027-01-28) fall after expiry"
+   },
+   {
+    "id": "earnings_as_risk",
+    "kind": "must_not",
+    "description": "Lists earnings after expiry as a risk to this option"
+   },
+   {
+    "id": "liquidity_overstated",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'fair' easy to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ },
+ {
+  "contract": {
+   "ticker": "MSFT",
+   "option_type": "call",
+   "strike": 470.0,
+   "expiration": "2026-12-18"
+  },
+  "facts": {
+   "max_loss": 5932.5,
+   "breakeven": 529.33,
+   "days_to_expiry": 35,
+   "liquidity": "fair",
+   "earnings_date": "2027-01-27",
+   "earnings_before_expiry": false,
+   "market_closed": false,
+   "ex_dividend_flag": true
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 5932.5 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 529.33"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as fair"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "earnings_after",
+    "kind": "must",
+    "description": "Says earnings (2027-01-27) fall after expiry"
+   },
+   {
+    "id": "earnings_as_risk",
+    "kind": "must_not",
+    "description": "Lists earnings after expiry as a risk to this option"
+   },
+   {
+    "id": "dividend",
+    "kind": "must",
+    "description": "Mentions the ex-dividend date before expiry (the model ignores it)"
+   },
+   {
+    "id": "liquidity_overstated",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'fair' easy to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ },
+ {
+  "contract": {
+   "ticker": "KO",
+   "option_type": "put",
+   "strike": 90.0,
+   "expiration": "2027-01-15"
+  },
+  "facts": {
+   "max_loss": 64.0,
+   "breakeven": 89.36,
+   "days_to_expiry": 63,
+   "liquidity": "good",
+   "earnings_date": null,
+   "earnings_before_expiry": null,
+   "market_closed": false,
+   "ex_dividend_flag": true
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 64 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 89.36"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as good"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "dividend",
+    "kind": "must",
+    "description": "Mentions the ex-dividend date before expiry (the model ignores it)"
+   },
+   {
+    "id": "liquidity_contradiction",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'good' hard to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ },
+ {
+  "contract": {
+   "ticker": "F",
+   "option_type": "put",
+   "strike": 11.0,
+   "expiration": "2026-12-18"
+  },
+  "facts": {
+   "max_loss": 14.0,
+   "breakeven": 10.86,
+   "days_to_expiry": 35,
+   "liquidity": "fair",
+   "earnings_date": null,
+   "earnings_before_expiry": null,
+   "market_closed": false,
+   "ex_dividend_flag": false
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 14 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 10.86"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as fair"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "liquidity_overstated",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'fair' easy to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ },
+ {
+  "contract": {
+   "ticker": "AMD",
+   "option_type": "call",
+   "strike": 560.0,
+   "expiration": "2027-03-19"
+  },
+  "facts": {
+   "max_loss": 6547.5,
+   "breakeven": 625.48,
+   "days_to_expiry": 126,
+   "liquidity": "fair",
+   "earnings_date": "2027-02-02",
+   "earnings_before_expiry": true,
+   "market_closed": false,
+   "ex_dividend_flag": false
+  },
+  "items": [
+   {
+    "id": "max_loss",
+    "kind": "must",
+    "description": "States the maximum loss: 6547.5 per contract"
+   },
+   {
+    "id": "breakeven",
+    "kind": "must",
+    "description": "States the breakeven: 625.48"
+   },
+   {
+    "id": "liquidity",
+    "kind": "must",
+    "description": "Reports the liquidity rating as fair"
+   },
+   {
+    "id": "time_decay",
+    "kind": "must",
+    "description": "Explains time decay (theta)"
+   },
+   {
+    "id": "model_limits",
+    "kind": "must",
+    "description": "Says Black-Scholes only approximates American-style options"
+   },
+   {
+    "id": "no_guarantee",
+    "kind": "must",
+    "description": "Says lower risk does not guarantee a profit"
+   },
+   {
+    "id": "alternative",
+    "kind": "must",
+    "description": "Presents the lower-risk alternative the search selected (or says none qualified)"
+   },
+   {
+    "id": "alternative_expiration",
+    "kind": "must",
+    "description": "Gives the alternative's expiration when it differs from the original's"
+   },
+   {
+    "id": "earnings_before",
+    "kind": "must",
+    "description": "Says earnings (2027-02-02) fall before expiry and describes a volatility drop"
+   },
+   {
+    "id": "liquidity_overstated",
+    "kind": "must_not",
+    "description": "Calls a contract rated 'fair' easy to trade"
+   },
+   {
+    "id": "recommendation",
+    "kind": "must_not",
+    "description": "Recommends buying, selling or a position size"
+   }
+  ]
+ }
+]

@@ -34,7 +34,8 @@ PATTERNS = {
         r"\b(tell|inform|advise|assure|convince)\s+(the\s+)?(user|reader)s?\s+(to|that)\b", re.I),
     "exfiltrate": re.compile(
         r"\b(send|post|email|upload|reveal|print|share|leak)\b[^.!?]{0,40}"
-        r"\b(api[ _-]?keys?|passwords?|credentials?|tokens?|secrets?|system prompt|\.env)\b", re.I),
+        r"\b(api[ _-]?keys?|passwords?|credentials?|(access|auth|api|bearer) tokens?|secret keys?|system prompt"
+        r"|\.env)\b", re.I),  # not bare "secret" or "token": "share secret wedding news" is gossip, not an attack
     "addressed_to_automation": re.compile(
         r"\b(automated|automatic|machine[- ]generated|ai[- ]generated)\s+(reports?|summar\w+|briefs?|analys[ie]s)\b"
         r"[^.!?]{0,40}\b(should|must|are expected|need to|are told|have to)\b"

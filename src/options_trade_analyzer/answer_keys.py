@@ -15,7 +15,7 @@ import re
 from dataclasses import asdict, dataclass
 
 from options_trade_analyzer.agents import tools
-from options_trade_analyzer.agents.verifier import (LOW_LIQUIDITY_WORDS, NO_GUARANTEE, NUMBER, recommends,
+from options_trade_analyzer.agents.verifier import (NO_GUARANTEE, NUMBER, liquidity_contradictions, recommends,
                                                     _decimals, _report_dates, _to_float, mentions_model_limits)
 
 SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
@@ -173,7 +173,7 @@ def check(item_id: str, report: str, facts: dict, contract: dict, trace: list[di
     if item_id == "dividend":
         return "dividend" in low
     if item_id == "liquidity_contradiction":
-        return not LOW_LIQUIDITY_WORDS.search(report)
+        return not liquidity_contradictions(report)
     if item_id == "liquidity_overstated":
         return not GOOD_LIQUIDITY.search(report)
     if item_id == "recommendation":

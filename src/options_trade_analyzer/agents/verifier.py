@@ -55,6 +55,12 @@ OVERCONFIDENT = re.compile(
     re.I)
 HEDGED = re.compile(r"\b(scenario|estimate[sd]?|may|might|could|if|assum\w*|not a forecast)\b", re.I)
 SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
+# Notes about the revision leaking into the report the reader sees (found in a Haiku scenario run: "My previous
+# draft still cited ... I have removed that citation"). "Report" is left out: "a prior report" means earnings.
+REVISION_NOTES = re.compile(
+    r"\b(previous|earlier|prior|last|original|first) (draft|version)\b"
+    r"|\bI (have )?(removed|revised|corrected|updated|rewrote|replaced)\b|\b(this|the) revision\b"
+    r"|\bthe (critic|feedback)\b", re.I)
 # How a report shows it stated each trade-off of the alternative (analytics.alternatives.trade_offs).
 TRADE_OFF_WORDS = {
     "capped_gain": re.compile(r"\b(cap(s|ped)?|limit(s|ed)?)\b[^.\n]{0,40}\b(gain|profit|upside)\b"
@@ -111,6 +117,16 @@ def _numbers_in(value) -> list[float]:
         for v in value:
             found += _numbers_in(v)
     return found
+
+
+def _num(value) -> float | None:
+    """A tool argument or result as a number, or None: models sometimes pass "null" or text as an argument,
+    and a missing value (no implied volatility) is None; neither may crash the checks."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number == number else None  # NaN counts as missing
 
 
 def _to_float(token: str) -> float | None:
@@ -173,8 +189,8 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
     # --- numbers ---
     allowed = set()
     for c in calls:
-        scenario = [c.args["iv_change_pct"]] if c.args.get("iv_change_pct") else []
-        for n in _numbers_in(c.result) + [float(x) for x in scenario]:
+        scenario = [n for n in [_num(c.args.get("iv_change_pct"))] if n]
+        for n in _numbers_in(c.result) + scenario:
             allowed |= {n, n * 100, n / 100}
     allowed |= {float(request["strike"])}
     text = KB_CITATION.sub(" ", NEWS_CITATION.sub(" ", report))
@@ -200,18 +216,21 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
     for c in calls:
         if c.name == "compute_greeks" and contract.get("stock_price"):
             for arg, key in (("stock_price", "stock_price"), ("implied_volatility_pct", "implied_volatility_pct")):
-                if arg in c.args and abs(float(c.args[arg]) - float(contract[key])) > 0.011:
+                given, expected = _num(c.args.get(arg)), _num(contract.get(key))
+                if arg in c.args and expected is not None and (given is None or abs(given - expected) > 0.011):
                     input_errors.append(f"compute_greeks was called with {arg}={c.args[arg]} but "
                                         f"get_option_contract returned {contract[key]}; recompute with the correct value.")
         if c.name in ("compute_greeks", "compare_strategies", "search_alternatives", "get_option_contract"):
-            if "strike" in c.args and abs(float(c.args["strike"]) - float(request["strike"])) > 1e-6:
+            strike = _num(c.args.get("strike"))
+            if "strike" in c.args and (strike is None or abs(strike - float(request["strike"])) > 1e-6):
                 input_errors.append(f"{c.name} was called with strike {c.args['strike']}, not the requested {request['strike']:g}.")
             if c.args.get("expiration") and c.args["expiration"] != request["expiration"]:
                 input_errors.append(f"{c.name} was called with expiration {c.args['expiration']}, not {request['expiration']}.")
     # a corrected later call fixes an earlier wrong one: only flag if no call used the right inputs
     if input_errors and not any(
             c.name == "compute_greeks" and not c.args.get("iv_change_pct")
-            and abs(float(c.args.get("stock_price", -1)) - float(contract.get("stock_price", -2))) <= 0.011
+            and _num(c.args.get("stock_price")) is not None and _num(contract.get("stock_price")) is not None
+            and abs(_num(c.args["stock_price"]) - _num(contract["stock_price"])) <= 0.011
             for c in calls):
         v.issues += sorted(set(input_errors))
     else:
@@ -240,7 +259,7 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
 
     # --- liquidity wording vs the rule-based rating ---
     rating = quote.result.get("data_quality", {}).get("liquidity", {}).get("rating") if quote else None
-    contradictions = LOW_LIQUIDITY_WORDS.findall(report) if rating == "good" else []
+    contradictions = liquidity_contradictions(report) if rating == "good" else []
     if contradictions:
         v.issues.append("Report describes liquidity as poor (e.g. wide spread, low volume) but the "
                         "data_quality liquidity rating is 'good'. Use the rating as given.")
@@ -262,6 +281,10 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
     # --- required statements ---
     statement_issues = statement_problems(report, any(c.name in ALTERNATIVE_TOOLS for c in calls))
     v.issues += statement_issues
+    notes = [m.group(0) for m in REVISION_NOTES.finditer(report)]
+    if notes:
+        v.issues.append(f"The report talks about its own revision ({', '.join(dict.fromkeys(notes))}); the reader "
+                        "never sees the feedback, so remove those notes.")
     missing_trade_offs = trade_off_problems(report, trace)
     v.issues += [f"The alternative's trade-off is not stated in the report: {text}" for text in missing_trade_offs]
     overconfident = overconfident_sentences(report)
@@ -289,8 +312,19 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
         "statement_issues": len(statement_issues),
         "overconfident_sentences": len(overconfident),
         "missing_trade_offs": len(missing_trade_offs),
+        "revision_notes": len(notes),
     }
     return v
+
+
+ABOUT_ALTERNATIVES = re.compile(r"\b(pruned|alternatives?|candidates?|runner-up|legs?)\b", re.I)
+
+
+def liquidity_contradictions(report: str) -> list[str]:
+    """Sentences calling the contract hard to trade. A sentence about a rejected alternative's leg ("one was
+    pruned because a leg had poor liquidity") is about another position, not this contract."""
+    return [s.strip() for s in SENTENCE.split(report)
+            if LOW_LIQUIDITY_WORDS.search(s) and not ABOUT_ALTERNATIVES.search(s)]
 
 
 def recommends(report: str) -> bool:
@@ -361,9 +395,13 @@ def statement_problems(report: str, has_alternative: bool) -> list[str]:
     return problems
 
 
+REPORT_ONLY = (" Reply with the report only: the reader never sees this feedback, so do not mention it, a "
+               "revision or an earlier draft.")
+
+
 def revision_request(v: Verification) -> str:
     """The feedback message sent back to the agent when verification fails."""
     lines = "\n".join(f"- {issue}" for issue in v.issues)
     return ("Your report failed automatic verification against the tool outputs:\n" + lines +
             "\nCall any missing tools, remove or correct every unsupported number, date and citation, "
-            "and then write the complete report again with all required headings.")
+            "and then write the complete report again with all required headings." + REPORT_ONLY)

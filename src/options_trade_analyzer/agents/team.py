@@ -33,7 +33,7 @@ from options_trade_analyzer.agents import critic as llm_critic
 from options_trade_analyzer.agents import tools
 from options_trade_analyzer.agents.options_agent import (MAX_REVISIONS, MAX_STEPS, AnalysisResult,
                                                          _token_usage, input_flags, to_trace)
-from options_trade_analyzer.agents.verifier import Verification, verify
+from options_trade_analyzer.agents.verifier import REPORT_ONLY, Verification, verify
 from options_trade_analyzer.analytics import input_risk
 from options_trade_analyzer.data import CachingProvider
 
@@ -307,7 +307,8 @@ class Team:
             messages += [AIMessage(state.get("report", "")),
                          HumanMessage("Your report failed the Critic's checks:\n"
                                       + "\n".join(f"- {i}" for i in state["writer_feedback"])
-                                      + "\nThe findings above may have been updated. Write the complete report again.")]
+                                      + "\nThe findings above may have been updated. Write the complete report again."
+                                      + REPORT_ONLY)]
         report, tokens = write_report(messages)
         total = state.get("writer_tokens") or {"input": 0, "output": 0}
         return {"report": report, "writer_messages": messages + [AIMessage(report)],

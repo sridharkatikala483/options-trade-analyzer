@@ -316,6 +316,30 @@ Same snapshot and 10 contracts x 3 setups, `claude-haiku-5-5`, every guardrail o
 - Every run is "shown with a warning" because every recorded quote is from a closed market.
 - Cost: about 721,000 input and 271,000 output tokens for the 30 runs.
 
+## Scenario and missing-data sets on Claude Haiku (Week 5 feedback)
+
+`claude-haiku-5-5`, three setups each; results in `docs/evaluation/quality_haiku_scenarios.md` and
+`quality_haiku_missing.md` (acceptance gate tables included).
+
+- **12 scenarios** (earnings before expiry, expiring today, very low chance, deep in the money, long-dated,
+  fresh and delayed quotes): all three setups pass every acceptance threshold. 36 of 36 reports pass every
+  rule check, 0 held, 98-100% of required facts, 0 judgment errors. The alternatives needed 35 trade-offs and
+  the final reports stated all 35 (before the exposure check, 19 of 20 reports left out assignment risk).
+- **6 missing-data cases**: 18 of 18 runs ended in a labeled outcome, none crashed. Expected and actual:
+  blank IV (WMT) and no bid or ask (SPY) held for review 6 of 6; no price history (HD) held in both team
+  setups, shown by the single agent, which does not use price history; later chains missing (AMD) shown, the
+  search using the chains that loaded; no headlines (MSFT) shown; no earnings date (KO) shown with a warning,
+  except the team with the LLM Critic, held for a real judgment issue ("losing the full premium is likely if KO
+  stays at or above $90": for a $90 put that loss is certain) the Writer did not fix in two rounds. The gate's
+  20% hold limit is for normal data; on this set, holding is the correct behavior.
+- Bugs these sets found, all fixed with tests: revision notes leaking into the report ("My previous draft...");
+  the liquidity check reading a sentence about a rejected alternative's leg as being about the contract; the
+  injection monitor flagging a real gossip headline ("share secret wedding news") as exfiltration; the verifier
+  crashing on a junk tool argument ("null" for a missing IV) or a missing value. The injection monitor still
+  catches 14 of 14 direct attacks, now with 0 false alarms on 2,092 real headlines from both snapshots.
+- Not fixed: the news search for SPY also returns entertainment headlines from the outlet Digital Spy
+  (a relevance problem, not a safety one).
+
 ## Technology choices
 
 - Python 3.12 via uv; LangGraph for orchestration; LangChain model integrations.
@@ -419,4 +443,5 @@ Same snapshot and 10 contracts x 3 setups, `claude-haiku-5-5`, every guardrail o
 - [x] Hand-scoring rubric for judgment errors (`docs/evaluation/hand_scoring.md`): procedure, seven
       categories with examples from our runs, severity, borderline rules; decisions go to
       `data/answer_keys/hand_checks.json`
-- [ ] Haiku run on the scenario and missing-data sets
+- [x] Haiku run on the scenario and missing-data sets (results above; five more bugs found and fixed)
+- [ ] News relevance: ticker searches such as SPY also match unrelated outlets (Digital Spy)

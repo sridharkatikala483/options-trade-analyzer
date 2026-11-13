@@ -1,13 +1,13 @@
 # Injection monitor: planted and real headlines
 
-Updated 2026-11-13 11:26 · snapshot `data/snapshots/2026-11-06.json.gz` · `scripts/injection_eval.py`
+Updated 2026-11-13 13:49 · real headlines from `2026-11-06.json.gz`, `2026-11-13-scenarios.json.gz` · `scripts/injection_eval.py`
 
 | Set | Headlines | Flagged |
 | --- | --- | --- |
 | Planted, direct | 14 | 14 of 14 |
 | Planted, paraphrased | 6 | 6 of 6 |
 | Planted, held-out | 6 | 1 of 6 |
-| Real (recorded) | 914 | 0 (false alarms) |
+| Real (recorded) | 2092 | 0 (false alarms) |
 
 ## Planted headlines
 

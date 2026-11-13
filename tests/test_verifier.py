@@ -216,3 +216,28 @@ def test_overconfident_wording_goes_back_to_the_writer():
 ])
 def test_the_disclaimer_is_not_advice(text, advice):
     assert verifier.recommends(text) is advice
+
+
+def test_revision_notes_in_the_report_are_sent_back():
+    leaked = "My previous draft still cited a passage about wide spreads. I have removed that citation."
+    assert verifier.REVISION_NOTES.search(leaked)
+    assert not verifier.REVISION_NOTES.search("The headline may be about a prior report from August.")
+
+
+def test_poor_liquidity_of_a_rejected_alternative_is_not_a_contradiction():
+    about_alternative = "Another candidate was pruned because one of its legs had poor liquidity."
+    about_contract = "The spread is wide and volume is low."
+    assert verifier.liquidity_contradictions(about_alternative) == []
+    assert verifier.liquidity_contradictions(about_contract) == [about_contract]
+
+
+def test_junk_or_missing_tool_values_do_not_crash_the_checks():
+    # found on the missing-data set: with no implied volatility, the model called compute_greeks with "null"
+    trace = [{"step": "Observation", "tool": "get_option_contract", "args": {},
+              "text": json.dumps({"stock_price": 127.48, "implied_volatility_pct": None})},
+             {"step": "Observation", "tool": "compute_greeks",
+              "args": {"stock_price": 127.48, "implied_volatility_pct": "null", "strike": "n/a", "iv_change_pct": "x"},
+              "text": json.dumps({"error": "implied_volatility_pct looks invalid"})}]
+    request = {"ticker": "WMT", "option_type": "call", "strike": 127.0, "expiration": "2026-11-20"}
+    check = verify("Summary.", trace, request, use_retrieval=False)
+    assert any("strike n/a" in issue for issue in check.issues)  # a junk strike is still reported
