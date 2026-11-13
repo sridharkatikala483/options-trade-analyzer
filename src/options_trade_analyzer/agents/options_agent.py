@@ -94,19 +94,19 @@ def to_trace(messages) -> list[dict]:
     trace, pending = [], {}
     for message in messages:
         if isinstance(message, AIMessage) and message.tool_calls:
-            if message.content:
-                trace.append({"step": "Thought", "text": str(message.content).strip()})
+            if message.text:  # .text keeps only text blocks (Claude also returns thinking blocks)
+                trace.append({"step": "Thought", "text": message.text.strip()})
             for call in message.tool_calls:
                 pending[call["id"]] = call
                 trace.append({"step": "Action", "text": f"{call['name']}({json.dumps(call['args'])})"})
         elif isinstance(message, ToolMessage):
             call = pending.get(message.tool_call_id, {})
-            trace.append({"step": "Observation", "text": str(message.content),
+            trace.append({"step": "Observation", "text": message.text,
                           "tool": call.get("name", message.name), "args": call.get("args", {})})
         elif isinstance(message, AIMessage):
-            trace.append({"step": "Finish", "text": str(message.content).strip()})
+            trace.append({"step": "Finish", "text": message.text.strip()})
         elif isinstance(message, HumanMessage) and trace:
-            trace.append({"step": "Critic", "text": str(message.content)})
+            trace.append({"step": "Critic", "text": message.text})
     return trace
 
 

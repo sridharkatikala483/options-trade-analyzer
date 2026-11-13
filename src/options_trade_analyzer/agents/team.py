@@ -149,7 +149,7 @@ def run_agent(name: str, prompt: str, agent_tools: list, messages: list) -> Agen
 
 def write_report(messages: list) -> tuple[str, dict]:
     reply = config.get_llm().invoke(messages)
-    return str(reply.content).strip(), _token_usage([reply])
+    return reply.text.strip(), _token_usage([reply])  # text blocks only, not Claude's thinking
 
 
 def llm_review(context: str, report: str) -> tuple[list, str | None, dict]:

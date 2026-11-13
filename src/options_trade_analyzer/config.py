@@ -43,8 +43,11 @@ def get_llm(provider: str | None = None, reasoning: bool = True) -> BaseChatMode
         # temperature 0 for repeatable runs; qwen3 thinking stays on (kept out of the reply) for reliable
         # tool calls; Ollama's default 4096-token context truncates agent traces, so raise it.
         # The timeout stops a dropped connection (e.g. after the Mac sleeps) from hanging a run forever.
+        # num_predict caps one reply: qwen3 occasionally loops in its thinking and, with tokens still
+        # streaming, the timeout never fires (one evaluation call ran 4+ hours past 100,000 tokens).
+        # Normal replies are far below the cap; a whole run's output is under 13,000 tokens.
         return ChatOllama(model=OLLAMA_MODEL, temperature=0, reasoning=reasoning, num_ctx=16384,
-                          client_kwargs={"timeout": 600})
+                          num_predict=8192, client_kwargs={"timeout": 600})
     if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic
 

@@ -39,3 +39,20 @@ def test_review_sends_the_report_and_the_evidence():
     judgments, error, _ = critic.review(llm, "## Evidence\\n[get_earnings_date] {...}", "Summary: ...")
     assert judgments == [] and error is None
     assert "Report to review" in llm.messages[1].content and "Evidence" in llm.messages[1].content
+
+
+def test_claude_thinking_blocks_are_not_read_as_text():
+    """Claude returns thinking blocks (with an encoded signature) next to the text; only the text counts."""
+    from options_trade_analyzer.agents.options_agent import to_trace
+
+    reply = AIMessage(content=[{"type": "thinking", "thinking": "check 768 and 93", "signature": "CAQStxUK768"},
+                               {"type": "text", "text": '{"issues": []}'}])
+
+    class ClaudeLike:
+        def invoke(self, messages):
+            return reply
+
+    assert critic.review(ClaudeLike(), "context", "report")[:2] == ([], None)
+    report = AIMessage(content=[{"type": "thinking", "thinking": "x", "signature": "abc"},
+                                {"type": "text", "text": "Summary: the premium is $7.53."}])
+    assert to_trace([report]) == [{"step": "Finish", "text": "Summary: the premium is $7.53."}]

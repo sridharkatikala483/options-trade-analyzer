@@ -39,6 +39,7 @@ src/options_trade_analyzer/
   config.py                             reads .env at import; get_llm() is the only LLM factory
   clock.py                              today()/now(): the only clock; a snapshot replay freezes it
   jobs.py                               background analysis runs for the dashboard (survive reloads, one at a time)
+  answer_keys.py                        what a correct report must and must not say, built from the snapshot
   data/provider.py                      MarketDataProvider Protocol + YFinanceProvider
   data/__init__.py                      get_provider(name) factory
   data/snapshot.py                      RecordingProvider (record live calls) + SnapshotProvider (replay, freezes clock)
@@ -76,8 +77,10 @@ tests/test_snapshot.py                  record/replay round trip; a later replay
 tests/test_jobs.py                      background jobs: progress wording, one at a time, errors kept
 tests/test_team.py                      team wiring with stand-in LLM calls: join, routing, failures, stop
 tests/test_risk_metrics.py              risk-adjusted measures on the same synthetic chain
+tests/test_answer_keys.py               answer-key items and scoring on short reports with planted mistakes
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
 scripts/evaluate.py                     10 contracts x 3 setups, resumable -> docs/evaluation/ (hours on local qwen3)
+scripts/score_reports.py                score evaluation reports against answer keys -> docs/evaluation/quality_<name>.md
 scripts/evaluate_tot.py                 ToT vs fixed spread vs exhaustive, plus risk-adjusted measures -> docs/evaluation/tot_summary*.md
 data/knowledge/                         synthetic options-education notes (the RAG corpus)
 data/snapshots/                         recorded market data (gzipped JSON) for repeatable evaluation runs
@@ -113,7 +116,9 @@ Key seams to keep intact:
 - On local `qwen3:8b`, keep `reasoning=True` and `num_ctx=16384`: with thinking off it often stops early with an empty
   reply, and Ollama's default 4096-token context silently truncates the trace. One run takes minutes.
   Exception: the ToT proposer uses `get_llm(reasoning=False)` for its short menu picks (~7 s per call instead
-  of ~6 min); an empty reply there just falls back to the default choices.
+  of ~6 min); an empty reply there just falls back to the default choices. `get_llm` caps each qwen3 reply at
+  8,192 tokens (`num_predict`): qwen3 sometimes loops in its thinking, and a still-streaming reply never hits the timeout.
+- Read model replies with `message.text`, not `.content`: Claude returns thinking blocks in a content list.
 - yfinance `.news` currently returns nothing; headlines come from RSS in `data/news.py` instead.
 - `TOT_PROPOSER=rules` runs the alternative search without LLM calls (default `llm`); off-menu or
   unparseable proposals fall back to the default choices and are counted in the tool output.
@@ -126,5 +131,5 @@ Key seams to keep intact:
 
 ## Planned next steps (from DESIGN.md)
 
-Evaluate single agent vs team on the snapshot, with and without the LLM Critic → SQLite memory → evaluation harness
-(scenarios with answer keys, run with and without the Critic).
+Writer prompt fix for the gaps the answer keys found → repeat the comparison on Claude Haiku → SQLite memory →
+LLM vs rule proposer on more contracts.

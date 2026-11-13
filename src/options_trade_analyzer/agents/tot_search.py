@@ -66,8 +66,7 @@ class LLMProposer:
         menu = "\n".join(f"{i}. {o}" for i, o in enumerate(options, start=1))
         try:
             reply = self.llm.invoke(PROPOSE_PROMPT.format(context=context, question=question, options=menu, k=k))
-            content = reply.content if isinstance(reply.content, str) else " ".join(
-                part.get("text", "") for part in reply.content if isinstance(part, dict))
+            content = reply.text
             data = json.loads(re.search(r"\{.*\}", content, re.S).group(0))
             picks = []
             for n in data.get("choices", []):

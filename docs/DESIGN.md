@@ -258,6 +258,32 @@ checks that score it, so its first-draft scores are reported too, and reports ar
 - Runner fixes from the run: a 600 s Ollama request timeout (a dropped connection hung one run for
   hours) and resume reuses already-started contracts (re-resolving on a later day changed SPY's expiry).
 
+## Evaluation: single agent vs team, with and without the LLM Critic (Checkpoint 5)
+
+Snapshot `data/snapshots/2026-11-06.json.gz`, 10 contracts x 3 setups, qwen3:8b; verifier results in
+`docs/evaluation/summary_compare.md`, answer-key scores in `docs/evaluation/quality_compare.md`
+(`scripts/score_reports.py`, keys in `data/answer_keys/`).
+
+| | Single agent (ToT + retrieval + verifier) | Team, rule Critic only | Team + LLM Critic |
+| --- | --- | --- | --- |
+| Final reports passing every rule check | 9 of 10 (1 date error) | 8 of 10 (4 untraced numbers) | 10 of 10 |
+| First-draft problems | 7 untraced numbers, 3 liquidity, 1 date | 9 untraced numbers | 3 untraced numbers |
+| Average revision rounds | 1.3 | 1.0 | 0.5 |
+| Answer-key facts stated | 77% | 85% | 82% |
+| Answer-key mistakes (reports clean) | 3 (7 of 10) | 3 (7 of 10) | 2 (8 of 10) |
+| Average minutes per run | 16 | 21 | 21 (excluding one 7.7 h looping run) |
+| Average input tokens per run | 30,400 | 16,600 | 20,000 |
+
+- The team with the LLM Critic is the most reliable: every final report passed and first drafts needed the
+  fewest fixes. Both teams state more answer-key facts than the single agent, with smaller contexts per agent.
+- Gaps shared by all setups: Black-Scholes vs American-style limits missing (6-7 reports each; about 2 are
+  wordings the matcher misses), earnings after expiry listed as a risk (2-3 each); the single agent often
+  omits "lower risk does not guarantee a profit" (8 of 10). These point to a Writer prompt fix.
+- The rule-Critic-only team cited sources rarely (4 citations in 10 reports vs 12 and 35).
+- Runner fix from the run: qwen3 occasionally loops in its thinking; with tokens still streaming the 600 s
+  timeout never fires (one call ran 4+ hours past 100,000 tokens). `get_llm` now caps each reply at 8,192
+  tokens (`num_predict`); a whole normal run outputs under 13,000 tokens.
+
 ## Technology choices
 
 - Python 3.12 via uv; LangGraph for orchestration; LangChain model integrations.
@@ -304,5 +330,7 @@ checks that score it, so its first-draft scores are reported too, and reports ar
       evaluation contracts once (quotes, chains the ToT search can visit, earnings, 6m/2y history, headlines;
       0.3 MB), replay with `DATA_PROVIDER=snapshot`, clock frozen at the recording time. Two replays of
       `evaluate_tot.py --no-llm` gave identical results. First snapshot: `data/snapshots/2026-11-06.json.gz`
-- [ ] Answer keys and the evaluation harness on the snapshot: single agent vs team, with and without the
-      LLM Critic
+- [x] Answer keys built from the snapshot (`answer_keys.py`, `scripts/score_reports.py`) and the comparison:
+      single agent vs team, with and without the LLM Critic (results above)
+- [ ] Writer prompt fix for the shared gaps (model limits, earnings after expiry); repeat the comparison on
+      Claude Haiku

@@ -91,5 +91,5 @@ def review(llm, context: str, report: str) -> tuple[list[Judgment], str | None, 
     """Ask the LLM to review `report` against `context` (the findings and evidence the Writer saw)."""
     reply = llm.invoke([SystemMessage(CRITIC_PROMPT),
                         HumanMessage(f"{context}\n\n## Report to review\n{report}")])
-    judgments, error = parse(str(reply.content))
+    judgments, error = parse(reply.text)  # text blocks only, not Claude's thinking
     return judgments, error, reply
