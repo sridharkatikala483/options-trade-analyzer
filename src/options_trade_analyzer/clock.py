@@ -23,5 +23,11 @@ def now() -> dt.datetime:
     return _frozen[0] if _frozen else dt.datetime.now(dt.timezone.utc)
 
 
+def wall_now() -> dt.datetime:
+    """The real current UTC time, never frozen: for logs (when a person ran or reviewed something), not for
+    market math, which must use now()."""
+    return dt.datetime.now(dt.timezone.utc)
+
+
 def today() -> dt.date:
     return _frozen[1] if _frozen else dt.date.today()

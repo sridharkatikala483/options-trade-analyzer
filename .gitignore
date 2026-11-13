@@ -12,6 +12,7 @@ wheels/
 # Secrets and local data
 .env
 data/history.db
+data/runs/
 .streamlit/secrets.toml
 
 # macOS

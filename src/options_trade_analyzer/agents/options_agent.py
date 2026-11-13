@@ -85,6 +85,10 @@ class AnalysisResult:
     findings: dict = field(default_factory=dict)  # multi-agent runs: each agent's final findings
     routing: list[dict] = field(default_factory=list)  # multi-agent runs: which agent got which fix
     flags: list[dict] = field(default_factory=list)  # input risk flags, computed by code (shown above the report)
+    invalid_request: str | None = None  # the contract could not be looked up: the outcome is "refused"
+    outcome: str = ""                   # set by review.run_and_log: shown / shown_with_warning / needs_review / refused
+    reasons: list[str] = field(default_factory=list)
+    run_id: str = ""
 
 
 def build_agent(use_retrieval: bool = True, use_tot: bool = False):

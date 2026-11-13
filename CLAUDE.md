@@ -38,6 +38,8 @@ app.py                                  Streamlit dashboard: contract view, payo
 src/options_trade_analyzer/
   config.py                             reads .env at import; get_llm() is the only LLM factory
   clock.py                              today()/now(): the only clock; a snapshot replay freezes it
+  review.py                             Checkpoint 6 outcomes (shown / warning / held for review / refused), run log
+                                        data/runs/*.jsonl (gitignored), review queue and reviewer decisions
   jobs.py                               background analysis runs for the dashboard (survive reloads, one at a time)
   answer_keys.py                        what a correct report must and must not say, built from the snapshot
   data/provider.py                      MarketDataProvider Protocol + YFinanceProvider
@@ -80,6 +82,7 @@ tests/test_snapshot.py                  record/replay round trip; a later replay
 tests/test_jobs.py                      background jobs: progress wording, one at a time, errors kept
 tests/test_team.py                      team wiring with stand-in LLM calls: join, routing, failures, stop
 tests/test_risk_metrics.py              risk-adjusted measures on the same synthetic chain
+tests/test_review.py                    outcome rules, run log round trip, review queue and decisions
 tests/test_input_risk.py                input risk flags and the chance-beyond-breakeven estimate
 tests/test_answer_keys.py               answer-key items and scoring on short reports with planted mistakes
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
@@ -129,8 +132,10 @@ Key seams to keep intact:
 - `FINNHUB_API_KEY` and the Schwab keys are defined in `.env.example` but not used by code yet.
 - Tests should be deterministic and offline (no network, no LLM). Use `data/snapshots/` for market data.
 - Never call `date.today()` or `datetime.now()` directly: use `clock.today()` / `clock.now()`, or a snapshot
-  replay will see the wrong day (days to expiry, quote age and news age all drift).
-- Never commit `.env`, `data/history.db` (planned SQLite long-term memory), or `.streamlit/secrets.toml`.
+  replay will see the wrong day (days to expiry, quote age and news age all drift). Log timestamps (when a
+  person ran or reviewed something) use `clock.wall_now()`, which is never frozen.
+- Never commit `.env`, `data/history.db` (planned SQLite long-term memory), `data/runs/` (the run and review
+  log), or `.streamlit/secrets.toml`.
 - Style: short module docstrings, type hints, small functions, `Literal["call", "put"]` for option type.
 
 ## Planned next steps (from DESIGN.md)

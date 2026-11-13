@@ -402,6 +402,7 @@ class Team:
             findings={name: (run.findings or f"FAILED: {run.error}") for name, run in runs.items()},
             routing=state.get("routing", []),
             flags=input_flags(self.trace(state)),
+            invalid_request=state.get("error"),
         )
 
 

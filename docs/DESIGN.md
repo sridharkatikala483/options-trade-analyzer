@@ -347,4 +347,12 @@ Snapshot `data/snapshots/2026-11-06.json.gz`, 10 contracts x 3 setups, qwen3:8b;
       quote, under 15% risk-neutral chance beyond breakeven), shown above the report and given to the Writer.
       The snapshot has no short-expiry or low-chance contract (closest: F at 16.7%), so those two are tested on
       synthetic contracts only
-- [ ] Checkpoint 6 part 2: review queue and run log; injection monitor for headlines
+- [x] Checkpoint 6 part 2: outcomes, run log and review queue (`review.py`). Code decides each run's outcome
+      (shown / shown with a warning / held for review / refused) from the checks; every dashboard run is appended
+      to `data/runs/runs.jsonl` (gitignored) with its trace; reviewer decisions (approved / edited / rejected,
+      with a note) go to `reviews.jsonl`, never over the run. Dashboard: "Review queue" page, outcome banners, a
+      held draft hidden until approved. Escalation on the 30 saved runs: 5 of 30 (17%, target 20% or less);
+      the team with the LLM Critic held 2 of 10, both because qwen3's Critic reply had no JSON. Timestamps use
+      `clock.wall_now()` (a replay freezes market time, not review time). Not covered: a fallback-data trigger
+      (no fallback signal exists yet) and refusal for the single agent (only the team reports an invalid request)
+- [ ] Injection monitor for headlines (planted-instruction tests)

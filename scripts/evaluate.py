@@ -29,7 +29,7 @@ import time
 from dataclasses import asdict
 from datetime import date, datetime
 
-from options_trade_analyzer import clock, config
+from options_trade_analyzer import clock, config, review
 from options_trade_analyzer.agents import tools
 from options_trade_analyzer.agents.options_agent import analyze_contract
 from options_trade_analyzer.agents.team import analyze_contract_team
@@ -91,6 +91,7 @@ def run_one(contract: dict, setup: str) -> dict:
         "findings": result.findings,
         "routing": result.routing,
         "flags": [f["id"] for f in result.flags],
+        "outcome": review.decide_result(result)[0],
     }
 
 
@@ -98,6 +99,16 @@ def critic_cell(metrics: list[dict]) -> str:
     """Judgment issues the LLM Critic raised, over the runs where it ran (it waits for the rules to pass)."""
     ran = [x for x in metrics if x.get("llm_critic_ran")]
     return f"{sum(x['judgment_issues'] for x in ran)} in {len(ran)} reviews" if ran else "—"
+
+
+def outcome(run: dict) -> str:
+    """The Checkpoint 6 outcome; runs saved before outcomes existed are decided from their saved checks."""
+    return run.get("outcome") or review.decide(run["final_issues"], run["final"], run.get("findings") or {}, [])[0]
+
+
+def held_cell(rs: list[dict]) -> str:
+    held = sum(outcome(r) == "needs_review" for r in rs)
+    return f"{held} of {len(rs)}"
 
 
 def summarize(runs: list[dict]) -> str:
@@ -109,9 +120,9 @@ def summarize(runs: list[dict]) -> str:
         "setup is also *revised* by the same verifier, so its final scores show what the loop achieves;",
         "its first-draft scores show the agent before verification.", "",
         "| Setup | Runs | Tool completeness | Unsupported numbers | Date errors | Liquidity contradictions "
-        "| Required statements missing or wrong | Overconfident sentences | Citation accuracy | Recommendations | Judgment issues (LLM Critic) | Avg revisions | Avg seconds "
+        "| Required statements missing or wrong | Overconfident sentences | Held for review | Citation accuracy | Recommendations | Judgment issues (LLM Critic) | Avg revisions | Avg seconds "
         "| Avg tokens (in/out) |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for setup in SETUPS:
         for stage in (["first_draft", "final"] if SETUPS[setup]["verify_report"] else ["final"]):
@@ -128,6 +139,7 @@ def summarize(runs: list[dict]) -> str:
                 f"| {sum(x['liquidity_contradictions'] for x in m)} "
                 f"| {sum(x.get('statement_issues', 0) for x in m) if any('statement_issues' in x for x in m) else 'n/a'} "
                 f"| {sum(x.get('overconfident_sentences', 0) for x in m) if any('overconfident_sentences' in x for x in m) else 'n/a'} "
+                f"| {held_cell(rs) if stage == 'final' else ''} "
                 f"| {f'{1 - bad / cites:.0%} of {cites}' if cites else 'n/a'} "
                 f"| {sum(bool(x['recommendation']) for x in m)} "
                 f"| {critic_cell(m)} "

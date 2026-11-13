@@ -3,7 +3,8 @@
 Run with:  uv run streamlit run app.py
 With DATA_PROVIDER=snapshot in .env, the sidebar offers the recorded contracts (a reliable demo).
 The analysis runs in a background thread (jobs.py), so a click, a reload or another browser tab does
-not cancel it; the progress box refreshes itself every few seconds.
+not cancel it; the progress box refreshes itself every few seconds. Every run is logged with an outcome
+(review.py); runs held for review wait on the "Review queue" page for a person to approve, edit or reject.
 """
 
 import json
@@ -14,7 +15,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from options_trade_analyzer import clock, config
+from options_trade_analyzer import clock, config, review
 from options_trade_analyzer.jobs import Job, Jobs
 from options_trade_analyzer.agents import tools
 from options_trade_analyzer.agents.team import SPECIALISTS, analyze_contract_team
@@ -32,6 +33,8 @@ CHECKS = [("Required tools used", "tool_completeness", "{:.0%}"), ("Unsupported 
           ("Required statements missing or wrong", "statement_issues", "{}"),
           ("Overconfident sentences", "overconfident_sentences", "{}"),
           ("Judgment issues (LLM Critic)", "judgment_issues", "{}")]
+OUTCOME_LABELS = {"shown": "Shown", "shown_with_warning": "Shown with a warning",
+                  "needs_review": "Held for review", "refused": "Refused"}
 LEG = re.compile(r"(buy|sell) (\d+) ([\d.]+) (call|put) @ ([\d.]+)")
 
 
@@ -71,9 +74,71 @@ def legs(selected: dict) -> list[Leg]:
     return out
 
 
+def contract_label(request: dict) -> str:
+    return f"{request['ticker']} {request['strike']:g} {request['option_type']} {request['expiration']}"
+
+
+def review_page() -> None:
+    """Runs the checks could not clear wait here for a person; every decision is appended to the log."""
+    records, pending = review.runs(), review.queue()
+    rate = review.escalation_rate(records)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Runs logged", len(records))
+    c2.metric("Held for review", f"{rate:.0%}" if rate is not None else "-", help="Checkpoint 6 target: 20% or less")
+    c3.metric("Waiting for a decision", len(pending))
+
+    st.subheader("Waiting for review")
+    if not pending:
+        st.success("Nothing is waiting for review.")
+    else:
+        labels = [f"{r['started'][:16].replace('T', ' ')} UTC · {contract_label(r['request'])}" for r in pending]
+        run = pending[st.selectbox("Run (oldest first)", range(len(pending)), format_func=labels.__getitem__)]
+        st.markdown("**Why it was held**\n\n" + "\n".join(f"- {money(reason)}" for reason in run["reasons"]))
+        if run.get("issues"):
+            with st.expander("Checks that still fail", expanded=True):
+                st.markdown("\n".join(f"- {money(issue)}" for issue in run["issues"]))
+        if run.get("flags"):
+            st.warning("Risk flags on this contract:\n\n" + "\n".join(f"- {money(f['message'])}" for f in run["flags"]))
+        draft = run.get("report") or ""
+        edited = st.text_area("Report: edit it here before approving if needed", draft, height=420,
+                              key=f"edit-{run['run_id']}")
+        note = st.text_input("Note for the log (what you checked or changed)", key=f"note-{run['run_id']}")
+        b1, b2, b3 = st.columns(3)
+        if b1.button("Approve as written", disabled=not draft, key=f"ok-{run['run_id']}"):
+            review.log_review(run["run_id"], "approved", note)
+            st.rerun()
+        if b2.button("Approve my edited version", disabled=edited.strip() == draft.strip(), key=f"ed-{run['run_id']}"):
+            review.log_review(run["run_id"], "edited", note, edited)
+            st.rerun()
+        if b3.button("Reject", key=f"no-{run['run_id']}"):
+            review.log_review(run["run_id"], "rejected", note)
+            st.rerun()
+        with st.expander("Every tool call in this run"):
+            for step in run.get("trace", []):
+                if step["step"] == "Observation":
+                    st.markdown(f"**{AGENT_TITLES.get(step.get('agent'), step.get('agent', '?'))}** · `{step['tool']}`")
+                    st.code(step["text"][:2000], language="json")
+
+    st.subheader("All runs")
+    if records:
+        st.dataframe(pd.DataFrame([{
+            "Started (UTC)": r["started"][:16].replace("T", " "), "Contract": contract_label(r["request"]),
+            "Outcome": OUTCOME_LABELS.get(r["outcome"], r["outcome"]),
+            "Review": r["review"]["decision"] if r["review"] else ("waiting" if r["outcome"] == "needs_review" else ""),
+            "Reviewer note": (r["review"] or {}).get("note", ""), "Run id": r["run_id"]} for r in records]),
+            hide_index=True, width="stretch")
+    else:
+        st.caption("No runs logged yet. Runs started from the analysis page are logged here.")
+
+
 st.set_page_config(page_title="Options Trade Analyzer", layout="wide")
 st.title("AI Options Trade Analyzer")
 st.caption("For education only. This tool does not place trades or give financial advice.")
+
+page = st.sidebar.radio("Page", ["Analyze a contract", "Review queue"], horizontal=True)
+if page == "Review queue":
+    review_page()
+    st.stop()
 
 provider = load_provider()
 recorded = getattr(provider, "contracts", None)
@@ -172,17 +237,27 @@ else:
     if job and job.error:
         st.error(f"The last analysis failed: {job.error}")
     if st.button("Run AI analysis again" if result else "Run AI analysis", type="primary", disabled=busy is not None):
-        jobs().start(key, label, use_critic, lambda on_step: analyze_contract_team(
-            ticker, option_type, float(strike), expiration, use_llm_critic=use_critic, on_step=on_step))
+        request = {"ticker": ticker, "option_type": option_type, "strike": float(strike), "expiration": expiration}
+        jobs().start(key, label, use_critic, lambda on_step: review.run_and_log(
+            request, {"team": True, "llm_critic": use_critic}, lambda: analyze_contract_team(
+                ticker, option_type, float(strike), expiration, use_llm_critic=use_critic, on_step=on_step)))
         st.rerun()
 
 if result:
     v, first = result.verification, result.first_draft_verification
-    if v.passed:
+    decision = next((r["review"] for r in review.runs() if r["run_id"] == result.run_id), None)
+    held = result.outcome == "needs_review" and (decision is None or decision["decision"] == "rejected")
+    if result.outcome == "refused":
+        st.error(result.reasons[0] if result.reasons else "The request could not be analyzed.")
+    elif result.outcome == "needs_review" and decision is None:
+        st.error("**Held for human review.** " + " ".join(result.reasons)
+                 + " A person decides on the Review queue page; the draft below is not approved.")
+    elif decision:
+        st.info(f"Held for review, then **{decision['decision']}** by a reviewer"
+                + (f": {decision['note']}" if decision.get("note") else "."))
+    else:
         st.success(f"The report passed every check{' (rules and LLM Critic)' if job.llm_critic else ' (rules)'}"
                    f" after {result.revisions} fix round(s).")
-    else:
-        st.warning(f"{len(v.issues)} issue(s) remain after {result.revisions} fix round(s); see the Critic tab.")
 
     report_tab, agents_tab, critic_tab, details_tab, steps_tab = st.tabs(
         ["Report", "Agents' findings", "Critic", "Run details", "Timeline"])
@@ -190,7 +265,12 @@ if result:
         if result.flags:  # computed by code from the contract, not by the agents
             st.warning("**Before you read: this contract has risk flags**\n\n"
                        + "\n".join(f"- {money(f['message'])}" for f in result.flags))
-        st.markdown(money(result.report))
+        text = decision["report"] if decision and decision["decision"] == "edited" else result.report
+        if held:
+            with st.expander("Draft report (held for review: not approved)"):
+                st.markdown(money(text))
+        else:
+            st.markdown(money(text))
     with agents_tab:
         calls = defaultdict(list)
         for step in result.trace:
