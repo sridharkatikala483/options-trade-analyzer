@@ -15,6 +15,7 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
+from options_trade_analyzer import acceptance
 from options_trade_analyzer import answer_keys as ak
 from options_trade_analyzer import config
 from options_trade_analyzer.agents import tools
@@ -35,6 +36,17 @@ def build_keys(provider) -> dict[str, dict]:
     path.write_text(json.dumps(list(keys.values()), indent=1))
     print(f"Answer keys: {path.relative_to(config.PROJECT_ROOT)} ({len(keys)} contracts)")
     return keys
+
+
+def gate_section(name: str, runs: list[dict], scored: list[dict]) -> list[str]:
+    ruled_out = acceptance.false_alarms(name)
+    setups = list(dict.fromkeys(r["setup"] for r in runs))
+    by_setup = {s: acceptance.measure([r for r in runs if r["setup"] == s], [x for x in scored if x["setup"] == s],
+                                      ruled_out) for s in setups}
+    return ["## Acceptance gate", "",
+            "Thresholds from `acceptance.py` (Week 5 feedback). Judgment errors count answer-key mistakes not ruled "
+            f"out by hand in `data/answer_keys/hand_checks.json` ({len(ruled_out)} ruled out for this file).", ""] \
+        + acceptance.table(by_setup) + [""]
 
 
 def summarize(name: str, scored: list[dict], descriptions: dict[str, str]) -> str:
@@ -83,7 +95,8 @@ def main(name: str) -> None:
         scored.append({"contract": run["contract"], "setup": run["setup"],
                        **ak.score(run["report"], key, run["trace"])})
     out = EVAL_DIR / f"quality_{name}.md"
-    out.write_text(summarize(name, scored, descriptions))
+    out.write_text(summarize(name, scored, descriptions).replace(
+        "\n## Most often missed", "\n" + "\n".join(gate_section(name, runs, scored)) + "\n## Most often missed", 1))
     print(f"Scored {len(scored)} reports ({skipped} skipped: contract not in the snapshot) -> "
           f"{out.relative_to(config.PROJECT_ROOT)}")
 

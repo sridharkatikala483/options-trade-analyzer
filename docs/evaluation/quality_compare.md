@@ -1,6 +1,6 @@
 # Report quality against answer keys: compare
 
-Updated 2026-11-13 10:47 · snapshot `data/snapshots/2026-11-06.json.gz` · 30 reports
+Updated 2026-11-13 12:56 · snapshot `data/snapshots/2026-11-06.json.gz` · 30 reports
 
 Each report is checked against its contract's answer key: facts a correct report must state, and mistakes it must not make (built from the snapshot with the project's tools; plain text and number matching, so spot-check unusual wordings).
 
@@ -9,6 +9,21 @@ Each report is checked against its contract's answer key: facts a correct report
 | multi_agent_rules | 10 | 84 of 99 (85%) | 1 | 3 | 7 |
 | multi_agent | 10 | 81 of 99 (82%) | 0 | 2 | 8 |
 | retrieval_verified_tot | 10 | 76 of 99 (77%) | 0 | 3 | 7 |
+
+## Acceptance gate
+
+Thresholds from `acceptance.py` (Week 5 feedback). Judgment errors count answer-key mistakes not ruled out by hand in `data/answer_keys/hand_checks.json` (3 ruled out for this file).
+
+| Threshold | Target | multi_agent_rules | multi_agent | retrieval_verified_tot |
+| --- | --- | --- | --- | --- |
+| Required tools used (final reports) | >= 100% | ✅ 100% | ✅ 100% | ✅ 100% |
+| Numbers, dates or citations no tool returned (final reports) | <= 0 | ❌ 4 | ✅ 0 | ❌ 1 |
+| Reports that recommend a trade or size | <= 0 | ✅ 0 | ✅ 0 | ✅ 0 |
+| Judgment errors per 10 reports (answer-key mistakes not ruled out by hand) | <= 1.0 | ❌ 2.0 | ✅ 1.0 | ❌ 2.0 |
+| Required facts stated (answer keys) | >= 90% | ❌ 85% | ❌ 82% | ❌ 77% |
+| Runs held for human review | <= 20% | ✅ 20% | ✅ 20% | ✅ 10% |
+| Average seconds per run (target set for a hosted model) | <= 120 | ❌ 1236 | ❌ 3894 | ❌ 968 |
+| **All thresholds** | | **fail** | **fail** | **fail** |
 
 ## Most often missed or wrong
 

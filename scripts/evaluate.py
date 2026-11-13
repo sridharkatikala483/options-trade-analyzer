@@ -29,7 +29,7 @@ import time
 from dataclasses import asdict
 from datetime import date, datetime
 
-from options_trade_analyzer import clock, config, review
+from options_trade_analyzer import acceptance, clock, config, review
 from options_trade_analyzer.agents import tools
 from options_trade_analyzer.agents.options_agent import analyze_contract
 from options_trade_analyzer.agents.team import analyze_contract_team
@@ -118,9 +118,7 @@ def critic_cell(metrics: list[dict]) -> str:
     return f"{sum(x['judgment_issues'] for x in ran)} in {len(ran)} reviews" if ran else "—"
 
 
-def outcome(run: dict) -> str:
-    """The Checkpoint 6 outcome; runs saved before outcomes existed are decided from their saved checks."""
-    return run.get("outcome") or review.decide(run["final_issues"], run["final"], run.get("findings") or {}, [])[0]
+outcome = acceptance.outcome  # the Checkpoint 6 outcome, also for runs saved before outcomes existed
 
 
 def held_cell(rs: list[dict]) -> str:

@@ -389,3 +389,15 @@ Same snapshot and 10 contracts x 3 setups, `claude-haiku-5-5`, every guardrail o
       Results: 14 of 14 direct injections caught, 0 false alarms in 914 recorded headlines. Paraphrases: tuning
       raised the tuning set from 0 to 6 of 6 but a held-out set written beforehand only from 0 to 1 of 6, so
       word patterns overfit and plain-language attacks rely on the other layers (output checks, Critic)
+- [x] Week 5 feedback, part 1: scenario snapshot (`data/snapshots/2026-11-13-scenarios.json.gz`, `--specs
+      scenarios`): 12 contracts recorded during market hours covering earnings before expiry (5), expiring today
+      (2), very low chance (4), deep in the money, long-dated, fresh and delayed quotes, 6 puts, and a real missing
+      earnings date (KO, F)
+- [x] Week 5 feedback, part 2: acceptance gate (`acceptance.py`; a pass/fail table in every
+      `quality_<name>.md` from `score_reports.py`): tool completeness 100%, 0 untraced numbers, dates or
+      citations, 0 recommendations, at most 1 judgment error per 10 reports (answer-key mistakes minus flags a
+      person ruled out in `data/answer_keys/hand_checks.json`, each with a note), at least 90% of required facts,
+      at most 20% held for review, at most 120 s per run. Haiku passes every threshold in all three setups;
+      qwen3:8b fails on facts (77-85%) and time (16-65 min), so it stays the free development model
+- [ ] Week 5 feedback, part 3: exposure check for alternatives; synthetic missing-data cases; hand-scoring
+      rubric; Haiku run on the scenario set

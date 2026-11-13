@@ -1,0 +1,10 @@
+[
+ {"results": "compare", "contract": "TSLA 340 put 2026-11-20", "setup": "retrieval_verified_tot", "item": "earnings_as_risk",
+  "verdict": "false_alarm", "note": "The flagged line quotes a general knowledge passage about volatility crush after earnings; it does not present this contract's earnings as a risk."},
+ {"results": "compare", "contract": "TSLA 340 put 2026-11-20", "setup": "multi_agent_rules", "item": "earnings_as_risk",
+  "verdict": "false_alarm", "note": "\"Earnings after expiration are excluded from risk analysis\" is correct."},
+ {"results": "compare", "contract": "JPM 320 put 2026-12-11", "setup": "multi_agent", "item": "earnings_as_risk",
+  "verdict": "false_alarm", "note": "\"Specialist analysis missed the impact of earnings after expiration\" is a confusing line but does not present earnings as a risk to this option."},
+ {"results": "haiku_compare", "contract": "AAPL 342.5 call 2026-11-20", "setup": "multi_agent_rules", "item": "earnings_as_risk",
+  "verdict": "false_alarm", "note": "\"One news item refers to earnings but may be about a prior report\" is correct."}
+]
