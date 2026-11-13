@@ -45,6 +45,23 @@ CONTRACT_SPECS = [
     ("NVDA", "call", 0.00, 10), ("TSLA", "put", 0.05, 10), ("KO", "call", 0.00, 30),
     ("AMD", "call", 0.10, 30), ("SPY", "call", 0.00, 7), ("F", "call", 0.15, 45), ("JPM", "put", 0.05, 30),
 ]
+# Scenario set (Week 5 feedback: cover more market conditions). Recorded live during market hours on
+# 2026-11-13 (data/snapshots/2026-11-13-scenarios.json.gz); negative "otm" means in the money. Each spec
+# names the condition it covers in the recorded data (KO and F turned out to have no earnings date).
+SCENARIO_SPECS = [
+    ("WMT", "call", 0.00, 5), ("HD", "put", 0.03, 5), ("PANW", "call", 0.05, 10), ("ZM", "put", 0.00, 10),
+    ("SPY", "call", 0.00, 0), ("QQQ", "put", 0.01, 0), ("TSLA", "call", 0.25, 7), ("AAPL", "put", 0.12, 14),
+    ("MSFT", "call", -0.10, 30), ("KO", "put", 0.10, 60), ("F", "put", 0.10, 30), ("AMD", "call", 0.05, 120),
+]
+SCENARIO_COVERS = {
+    ("WMT", "call"): "earnings before expiry", ("HD", "put"): "earnings before expiry, put",
+    ("PANW", "call"): "earnings before expiry, out of the money", ("ZM", "put"): "earnings before expiry, mid-cap",
+    ("SPY", "call"): "expires today", ("QQQ", "put"): "expires today, put",
+    ("TSLA", "call"): "far out of the money, low chance", ("AAPL", "put"): "far out of the money put",
+    ("MSFT", "call"): "deep in the money", ("KO", "put"): "far out of the money, long-dated; no earnings date in the data",
+    ("F", "put"): "low-priced stock; no earnings date in the data", ("AMD", "call"): "long-dated (120+ days)",
+}
+SPEC_SETS = {"core": CONTRACT_SPECS, "scenarios": SCENARIO_SPECS}
 SETUPS = {
     "no_retrieval": {"use_retrieval": False, "verify_report": False},
     "retrieval": {"use_retrieval": True, "verify_report": False},
@@ -155,7 +172,7 @@ def summarize(runs: list[dict]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def main(limit: int | None, setups: list[str], out: str | None = None) -> None:
+def main(limit: int | None, setups: list[str], out: str | None = None, specs: str = "core") -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     suffix = f"_{out}" if out else ""
     results_file = OUT_DIR / f"results{suffix}.json"
@@ -168,7 +185,7 @@ def main(limit: int | None, setups: list[str], out: str | None = None) -> None:
 
     # On resume, reuse contracts already started: resolving again on a later day can pick a new expiry.
     started = {(r["contract"]["ticker"], r["contract"]["option_type"]): r["contract"] for r in runs}
-    contracts = [started.get(spec[:2]) or resolve(provider, *spec) for spec in CONTRACT_SPECS[:limit]]
+    contracts = [started.get(spec[:2]) or resolve(provider, *spec) for spec in SPEC_SETS[specs][:limit]]
     for contract in contracts:
         for setup in setups:
             key = (json.dumps(contract, sort_keys=True), setup)
@@ -191,5 +208,6 @@ if __name__ == "__main__":
     parser.add_argument("--limit", type=int, default=None, help="only the first N contracts")
     parser.add_argument("--setups", default=",".join(SETUPS), help="comma-separated subset of setups")
     parser.add_argument("--out", default=None, help="name for separate results/summary files")
+    parser.add_argument("--specs", default="core", choices=list(SPEC_SETS), help="contract set: core or scenarios")
     args = parser.parse_args()
-    main(args.limit, args.setups.split(","), args.out)
+    main(args.limit, args.setups.split(","), args.out, args.specs)

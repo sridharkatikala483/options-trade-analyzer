@@ -9,11 +9,12 @@ data/snapshots/<date>.json.gz. Replay it by setting in .env:
     SNAPSHOT_PATH=data/snapshots/<date>.json.gz
 
 Run with:  uv run python scripts/record_snapshot.py            # a few minutes, needs the internet
+           uv run python scripts/record_snapshot.py --specs scenarios   # the scenario set -> <date>-scenarios
 """
 
 import argparse
 
-from evaluate import CONTRACT_SPECS, resolve
+from evaluate import SPEC_SETS, resolve
 
 from options_trade_analyzer import clock, config
 from options_trade_analyzer.agents import tools
@@ -40,16 +41,17 @@ def record_contract(recorder: RecordingProvider, spec: tuple) -> dict:
     return contract
 
 
-def main(limit: int | None) -> None:
+def main(limit: int | None, specs: str = "core") -> None:
     recorder = RecordingProvider(YFinanceProvider())
     tools.provider = recorder
     contracts = []
-    for spec in CONTRACT_SPECS[:limit]:
+    for spec in SPEC_SETS[specs][:limit]:
         contract = record_contract(recorder, spec)
         contracts.append(contract)
         print(f"{contract['ticker']} {contract['strike']:g} {contract['option_type']} {contract['expiration']} "
               f"- {len(recorder.headlines[contract['ticker']])} headlines", flush=True)
-    path = recorder.save(OUT_DIR / f"{clock.today().isoformat()}.json.gz", contracts)
+    suffix = "" if specs == "core" else f"-{specs}"
+    path = recorder.save(OUT_DIR / f"{clock.today().isoformat()}{suffix}.json.gz", contracts)
     replay = SnapshotProvider(path)
     print(f"Saved {path.relative_to(config.PROJECT_ROOT)} ({path.stat().st_size / 1e6:.1f} MB, "
           f"{len(replay.calls)} calls, recorded {replay.recorded_at:%Y-%m-%d %H:%M} UTC)")
@@ -58,4 +60,6 @@ def main(limit: int | None) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--limit", type=int, default=None, help="only the first N contracts")
-    main(parser.parse_args().limit)
+    parser.add_argument("--specs", default="core", choices=list(SPEC_SETS), help="contract set: core or scenarios")
+    args = parser.parse_args()
+    main(args.limit, args.specs)
