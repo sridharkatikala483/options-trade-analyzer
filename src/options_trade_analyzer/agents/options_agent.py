@@ -59,8 +59,9 @@ COMPARE_STEP = "5. compare_strategies for the same contract. Use ONLY its number
 TOT_STEP = """5. search_alternatives for the same contract (same ticker, option type, strike and expiration).
    It searches spread types, strikes and expirations and scores each candidate. Use ONLY its numbers
    for the lower-risk alternative: present the selected position (its expiration, cost, maximum loss,
-   maximum gain, breakeven and score) and briefly the runner-up. If its outcome is "no qualifying
-   alternative", say so and give its reason instead of inventing one."""
+   maximum gain, breakeven and score), every item in its trade_offs list in plain words (capped gain,
+   assignment of a short leg, credit, expiration, chance), and briefly the runner-up. If its outcome is
+   "no qualifying alternative", say so and give its reason instead of inventing one."""
 
 RETRIEVAL_STEPS = """6. search_options_knowledge for each important risk you found (for example volatility crush,
    time decay, liquidity) and base your explanations on the passages.

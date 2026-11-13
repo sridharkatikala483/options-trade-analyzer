@@ -51,7 +51,8 @@ src/options_trade_analyzer/
   analytics/options_math.py             Black-Scholes price, Greeks, breakeven, payoff (via vollib)
   analytics/data_quality.py             quote freshness, liquidity rating, model-vs-market gap, assumption flags
   analytics/strategies.py               multi-leg payoff math (Leg, max loss/gain, breakevens) for comparisons
-  analytics/alternatives.py             ToT candidates: build, score out of 100, prune, rank (deterministic)
+  analytics/alternatives.py             ToT candidates: build, score out of 100, prune, rank (deterministic);
+                                        trade_offs(): how an alternative's exposure differs (report must state each)
   analytics/trend.py                    price trend from daily closes (1m/3m change, 50-day average, range)
   analytics/input_risk.py               risk flags on the contract itself (short expiry, poor liquidity, closed
                                         market, low chance beyond breakeven), shown above the report

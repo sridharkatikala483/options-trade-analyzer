@@ -399,5 +399,14 @@ Same snapshot and 10 contracts x 3 setups, `claude-haiku-5-5`, every guardrail o
       person ruled out in `data/answer_keys/hand_checks.json`, each with a note), at least 90% of required facts,
       at most 20% held for review, at most 120 s per run. Haiku passes every threshold in all three setups;
       qwen3:8b fails on facts (77-85%) and time (16-65 min), so it stays the free development model
-- [ ] Week 5 feedback, part 3: exposure check for alternatives; synthetic missing-data cases; hand-scoring
-      rubric; Haiku run on the scenario set
+- [x] Week 5 feedback, part 3a: exposure check for alternatives. The search now rejects an alternative that
+      does not move with the stock the way the original does, or whose maximum loss plus the bid-ask cost to open
+      is not lower (the rule used mid prices before), or that shows no loss at mid prices (a quote artifact: the
+      scenario snapshot found a TSLA bull put spread whose credit equalled its strike width, which also crashed
+      the chance formula with a $0 breakeven). `alternatives.trade_offs()` lists how the selected alternative's
+      exposure differs (capped gain, a short leg that can be assigned, a credit, a different expiration, a chance
+      5+ points lower); the search output carries the list, the prompts ask for it, and the verifier sends back a
+      report that leaves one out. On the saved reports, assignment risk was missing in 19 of 20 Haiku and 20 of
+      21 qwen3 reports with a spread; qwen3 also left out the capped gain in 17 of 21
+- [ ] Week 5 feedback, part 3b: synthetic missing-data cases; hand-scoring rubric for judgment errors; Haiku run
+      on the scenario set

@@ -19,6 +19,7 @@ import re
 from dataclasses import dataclass, field
 
 from options_trade_analyzer import clock
+from options_trade_analyzer.analytics import alternatives
 
 MONTHS = {m: i for i, m in enumerate(
     ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], start=1)}
@@ -54,6 +55,15 @@ OVERCONFIDENT = re.compile(
     re.I)
 HEDGED = re.compile(r"\b(scenario|estimate[sd]?|may|might|could|if|assum\w*|not a forecast)\b", re.I)
 SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
+# How a report shows it stated each trade-off of the alternative (analytics.alternatives.trade_offs).
+TRADE_OFF_WORDS = {
+    "capped_gain": re.compile(r"\b(cap(s|ped)?|limit(s|ed)?)\b[^.\n]{0,40}\b(gain|profit|upside)\b"
+                              r"|\b(gain|profit|upside)\b[^.\n]{0,40}\b(cap(s|ped)?|limit(s|ed)?)\b", re.I),
+    "short_leg": re.compile(r"\bassign(ed|ment)?\b", re.I),
+    "credit": re.compile(r"\bcredit\b|\bcollects?\b|\breceives?\b[^.\n]{0,30}\bup front\b", re.I),
+    "lower_chance": re.compile(r"\b(lower|smaller|less|reduced)\b[^.\n]{0,40}\b(chance|probability|likel\w*)\b"
+                               r"|\b(chance|probability)\b[^.\n]{0,40}\b(lower|smaller|less)\b|\bless likely\b", re.I),
+}
 
 
 @dataclass
@@ -252,6 +262,8 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
     # --- required statements ---
     statement_issues = statement_problems(report, any(c.name in ALTERNATIVE_TOOLS for c in calls))
     v.issues += statement_issues
+    missing_trade_offs = trade_off_problems(report, trace)
+    v.issues += [f"The alternative's trade-off is not stated in the report: {text}" for text in missing_trade_offs]
     overconfident = overconfident_sentences(report)
     for sentence in overconfident:
         v.issues.append(f"Overconfident wording; describe it as a possibility, scenario or estimate: \"{sentence[:160]}\"")
@@ -276,6 +288,7 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
         "recommendation": recommends(report),
         "statement_issues": len(statement_issues),
         "overconfident_sentences": len(overconfident),
+        "missing_trade_offs": len(missing_trade_offs),
     }
     return v
 
@@ -290,6 +303,38 @@ def recommends(report: str) -> bool:
 def mentions_model_limits(report: str) -> bool:
     low = report.lower()
     return "black-scholes" in low and any(w in low for w in ("american", "early exercise", "approximat"))
+
+
+def alternative_trade_offs(trace: list[dict]) -> list[dict]:
+    """The trade-offs of the alternative this run's search selected (computed for older saved outputs)."""
+    for step in reversed(trace):
+        if step["step"] == "Observation" and step.get("tool") == "search_alternatives":
+            try:
+                data = json.loads(step["text"])
+            except json.JSONDecodeError:
+                return []
+            selected = data.get("selected")
+            if not selected:
+                return []
+            if "trade_offs" in selected:
+                return selected["trade_offs"]
+            original = data["original"]
+            return alternatives.trade_offs(selected, original, bullish=" call" in original["legs"][0])
+    return []
+
+
+def trade_off_problems(report: str, trace: list[dict]) -> list[str]:
+    """The texts of trade-offs the report does not state."""
+    missing = []
+    for item in alternative_trade_offs(trace):
+        if item["id"] == "different_expiration":
+            expiration = dt.date.fromisoformat(item["expiration"])
+            stated = expiration in _report_dates(report, expiration.year)
+        else:
+            stated = bool(TRADE_OFF_WORDS[item["id"]].search(report))
+        if not stated:
+            missing.append(item["text"])
+    return missing
 
 
 def overconfident_sentences(report: str) -> list[str]:

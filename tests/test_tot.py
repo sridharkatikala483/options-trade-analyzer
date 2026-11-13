@@ -195,3 +195,66 @@ def test_thin_original_expiration_does_not_prune_every_family():
     assert result["outcome"] == "alternative found"
     assert result["selected"]["expiration"] != EXPIRATIONS[0]
     assert result["selected"]["score"] == exhaustive(market, "call", 102.0, EXPIRATIONS[0])[0].score
+
+
+# --- exposure check (Week 5 feedback: a lower maximum loss alone can mislead) ---
+
+ORIGINAL = {"legs": ["buy 1 100 call @ 5.00"], "cost": 500.0, "max_loss": 500.0, "max_gain": "unlimited",
+            "expiration": "2026-11-20", "chance_beyond_breakeven_pct": 35.0}
+
+
+def ids(selected, bullish=True):
+    return [t["id"] for t in alt.trade_offs(selected, ORIGINAL, bullish)]
+
+
+def test_a_debit_spread_caps_the_gain_and_has_a_short_leg():
+    spread = {"legs": ["buy 1 100 call @ 5.00", "sell 1 105 call @ 2.50"], "cost": 250.0, "max_loss": 250.0,
+              "max_gain": 250.0, "expiration": "2026-11-20", "chance_beyond_breakeven_pct": 38.0}
+    assert ids(spread) == ["capped_gain", "short_leg"]
+
+
+def test_a_credit_spread_on_a_later_date_with_lower_chance_lists_everything():
+    credit = {"legs": ["sell 1 95 put @ 3.00", "buy 1 90 put @ 1.50"], "cost": -150.0, "max_loss": 350.0,
+              "max_gain": 150.0, "expiration": "2026-12-18", "chance_beyond_breakeven_pct": 20.0}
+    items = alt.trade_offs(credit, ORIGINAL, bullish=True)
+    assert [t["id"] for t in items] == ["capped_gain", "short_leg", "credit", "different_expiration", "lower_chance"]
+    assert "95 put" in items[1]["text"] and "stays above" in items[2]["text"] and items[3]["expiration"] == "2026-12-18"
+
+
+def test_a_cheaper_single_call_has_no_capped_gain_or_short_leg():
+    cheaper = {"legs": ["buy 1 105 call @ 2.00"], "cost": 200.0, "max_loss": 200.0, "max_gain": "unlimited",
+               "expiration": "2026-11-20", "chance_beyond_breakeven_pct": 33.0}
+    assert ids(cheaper) == []
+
+
+def test_the_search_rejects_an_alternative_that_moves_the_other_way(market):
+    base = alt.original("call", 102.0, EXPIRATIONS[0], market)
+    bearish = alt.build("bear put spread", (95.0, 93.0), EXPIRATIONS[0], market)  # cheap, so only direction decides
+    assert alt.evaluate(bearish, base, market, bullish=True).pruned.startswith("it does not move")
+
+
+def test_every_selected_alternative_carries_its_trade_offs(market):
+    result = run(market)
+    assert result["selected"]["trade_offs"] and all({"id", "text"} <= set(t) for t in result["selected"]["trade_offs"])
+
+
+def test_the_verifier_sends_back_a_report_missing_a_trade_off(market):
+    from options_trade_analyzer.agents import verifier
+    result = run(market)
+    trace = [{"step": "Observation", "tool": "search_alternatives", "args": {}, "text": json.dumps(result)}]
+    silent = "The spread lowers the maximum loss."
+    stated = silent + " Its gain is capped, it collects a credit, and the short leg can be assigned early; it is less likely to pay off."
+    for item in result["selected"]["trade_offs"]:
+        if item["id"] == "different_expiration":
+            stated += f" It expires on {item['expiration']}."
+    assert len(verifier.trade_off_problems(silent, trace)) == len(result["selected"]["trade_offs"])
+    assert verifier.trade_off_problems(stated, trace) == []
+
+
+def test_a_no_loss_at_mid_position_is_rejected_not_crashed(market):
+    # found on the scenario snapshot: a TSLA bull put spread whose credit equalled the strike width at mid
+    # prices, so its breakeven came out as $0 and the chance formula divided by zero
+    base = alt.original("call", 102.0, EXPIRATIONS[0], market)
+    free = alt.Position("bull put spread", EXPIRATIONS[0],
+                        (alt.Leg("put", 100.0, 5.0, -1), alt.Leg("put", 95.0, 0.0, 1)), (IV, IV), ("good", "good"))
+    assert alt.evaluate(free, base, market, bullish=True).pruned.startswith("no loss at mid prices")

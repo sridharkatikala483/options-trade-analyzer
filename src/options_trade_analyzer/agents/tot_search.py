@@ -222,6 +222,11 @@ class Search:
         state = self.build_graph().invoke({"depth": 0, "frontier": [0], "nodes": [root], "stop": None})
         return self.result(state)
 
+    def _with_trade_offs(self, evaluation: alt.Evaluation, original: dict) -> dict:
+        summary = evaluation.summary(self.market)
+        summary["trade_offs"] = alt.trade_offs(summary, original, self.bullish)
+        return summary
+
     def result(self, state: SearchState) -> dict:
         nodes = state["nodes"][1:]
         scored = [n for n in nodes if n.evaluation]
@@ -240,11 +245,12 @@ class Search:
         original = base.summary(self.market)
         for key in ("score", "points"):
             original.pop(key)
+        selected, runner_up = [self._with_trade_offs(e, original) for e in survivors[:2]] + [None] * (2 - len(survivors[:2]))
         return {
             "stock_price": round(self.market.spot, 2),
             "original": original,
-            "selected": survivors[0].summary(self.market) if survivors else None,
-            "runner_up": survivors[1].summary(self.market) if len(survivors) > 1 else None,
+            "selected": selected,
+            "runner_up": runner_up,
             "outcome": "alternative found" if survivors else f"no qualifying alternative: {', '.join(reasons) or 'no candidates'}",
             "search": {
                 "method": f"beam search, width {BEAM_WIDTH}, {MAX_DEPTH} levels (family, strikes, expiration)",
@@ -259,10 +265,12 @@ class Search:
             "scoring": "100 points: risk reduction 30 (maximum loss plus the bid-ask cost to open), "
                        "breakeven distance 25, chance beyond breakeven 20, volatility-drop exposure 15, "
                        "liquidity 10; pruned if a leg is illiquid, the maximum loss is not lower, the chance "
-                       "beyond breakeven is below 15%, or the score is below 40",
+                       "beyond breakeven is below 15%, the position does not move with the stock the way "
+                       "the original does, or the score is below 40",
             "note": "Mid-price quotes; payoffs at each position's own expiration. The chance is a "
-                    "Black-Scholes estimate, not a forecast. Lower maximum loss does not guarantee a profit, "
-                    "and spreads cap the gain.",
+                    "Black-Scholes estimate, not a forecast. Lower maximum loss does not guarantee a profit. "
+                    "trade_offs lists how each alternative's exposure differs from the original; the report "
+                    "must state every one.",
         }
 
     def _strike_label(self, family: str, strikes: tuple[float, ...]) -> str:

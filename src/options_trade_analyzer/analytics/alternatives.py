@@ -30,6 +30,7 @@ TIE_POINTS = 2           # scores this close are ties, broken by max loss, liqui
 IV_DROP_PCT = -40        # the post-earnings volatility-drop scenario
 BREAKEVEN_ZERO_PCT = 10  # a breakeven this far (%) beyond the stock price earns no breakeven points
 LIQUIDITY_POINTS = {"good": 1.0, "fair": 0.5}
+CHANCE_DROP_PCT = 5      # a chance this many points below the original's is a trade-off the report must state
 
 # family: (option type of its legs, side of the original strike its second strike is on, leg signs)
 FAMILIES: dict[str, tuple[OptionType, int, tuple[int, ...]]] = {
@@ -239,7 +240,7 @@ def evaluate(position: Position, baseline: Position, market: Market, bullish: bo
     cost, base_cost = open_cost(position, market), open_cost(baseline, market)
     # risk compared at the prices actually paid: maximum loss at mid plus the bid-ask cost to open
     paid_loss, base_paid_loss = (loss + cost, base_loss + base_cost) if COUNT_BID_ASK else (loss, base_loss)
-    breakevens = strategies.breakevens(legs)
+    breakevens = [b for b in strategies.breakevens(legs) if b > 0]  # a stock cannot finish at or below $0
     breakeven = (min(breakevens) if bullish else max(breakevens)) if breakevens else None
 
     years = years_to_expiry(position.expiration, market.today)
@@ -267,10 +268,15 @@ def evaluate(position: Position, baseline: Position, market: Market, bullish: bo
     points = {k: round(float(WEIGHTS[k] * f), 1) for k, f in fractions.items()}
     score = round(sum(points.values()), 1)
 
+    direction, base_direction = position_delta(position, market), position_delta(baseline, market)
     if "poor" in position.liquidity:
         pruned = "a leg has poor liquidity"
-    elif loss >= base_loss - 0.005:
+    elif loss <= 0.005:  # e.g. a credit equal to the strike width: an artifact of mid prices, lost to the spread
+        pruned = "no loss at mid prices is a quote artifact, not a real position"
+    elif paid_loss >= base_paid_loss - 0.005:  # at the prices actually paid, not only at mid (Week 5 feedback)
         pruned = "maximum loss is not lower than the original"
+    elif direction * base_direction <= 0:
+        pruned = "it does not move with the stock the way the original does"
     elif chance < MIN_CHANCE:
         pruned = f"chance beyond breakeven below {MIN_CHANCE:.0%}"
     elif score < MIN_SCORE:
@@ -278,6 +284,47 @@ def evaluate(position: Position, baseline: Position, market: Market, bullish: bo
     else:
         pruned = None
     return Evaluation(position, score, points, pruned, loss, breakeven, distance, float(chance), change, cost)
+
+
+def position_delta(position: Position, market: Market) -> float:
+    """Shares-equivalent exposure to the stock price (positive gains when the stock rises)."""
+    years = years_to_expiry(position.expiration, market.today)
+    return sum(leg.quantity * options_math.greeks(leg.option_type, market.spot, leg.strike, years, market.rate, iv)["delta"]
+               for leg, iv in zip(position.legs, position.ivs)) * 100
+
+
+def trade_offs(selected: dict, original: dict, bullish: bool) -> list[dict]:
+    """How the alternative's exposure differs from the original's, from the two summaries the search returns.
+
+    Lower maximum loss is never the whole story (Week 5 feedback): a spread caps the gain, a short leg can be
+    assigned, a credit spread profits from the stock standing still rather than moving, a different
+    expiration changes the time at risk, and a cheaper position may be less likely to pay off. Each item is
+    one the report must state; the verifier checks it."""
+    out = []
+    gain, base_gain = selected["max_gain"], original["max_gain"]
+    if gain != "unlimited" and (base_gain == "unlimited" or gain < base_gain - 0.005):
+        was = "unlimited" if base_gain == "unlimited" else f"${base_gain:,.2f}"
+        out.append({"id": "capped_gain", "text": f"Its gain is capped at ${gain:,.2f} per contract; the original's "
+                                                f"maximum gain is {was}."})
+    shorts = [text.split(" ", 2)[2].split(" @")[0] for text in selected["legs"] if text.startswith("sell")]
+    if shorts:
+        out.append({"id": "short_leg", "text": f"It sells the {' and '.join(shorts)}: a short option can be assigned "
+                                              "early, and brokers usually require approval and margin for it."})
+    if selected["cost"] < 0:
+        side = "above" if bullish else "below"
+        out.append({"id": "credit", "text": f"It collects ${-selected['cost']:,.2f} up front but can lose up to "
+                                           f"${selected['max_loss']:,.2f}: it profits if the stock stays {side} its "
+                                           "breakeven, not from a large move."})
+    if selected["expiration"] != original["expiration"]:
+        when = "later" if selected["expiration"] > original["expiration"] else "earlier"
+        out.append({"id": "different_expiration", "expiration": selected["expiration"], "text": f"It expires on {selected['expiration']}, {when} than the "
+                                                         f"original ({original['expiration']})."})
+    chance, base_chance = selected["chance_beyond_breakeven_pct"], original["chance_beyond_breakeven_pct"]
+    if chance < base_chance - CHANCE_DROP_PCT:
+        out.append({"id": "lower_chance", "text": f"It is less likely to pay off: a {chance}% chance of finishing "
+                                                 f"beyond breakeven versus {base_chance}% for the original "
+                                                 "(Black-Scholes estimates, not forecasts)."})
+    return out
 
 
 def rank(evaluations: list[Evaluation]) -> list[Evaluation]:

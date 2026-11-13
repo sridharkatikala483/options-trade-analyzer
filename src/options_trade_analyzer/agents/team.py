@@ -80,7 +80,9 @@ beginner. You own the worst case and the lower-risk alternative.
 {steps}
 Cover: the maximum loss and breakeven from the contract, {scenario_cover}the selected alternative with
 its expiration (say so if it differs from the original expiration), cost, maximum loss, maximum gain,
-breakeven and score, the runner-up in one line, and that lower risk does not guarantee a profit.
+breakeven and score, every item in its trade_offs list (how its exposure differs from the original's:
+capped gain, assignment of a short leg, credit, expiration, chance), the runner-up in one line, and that
+lower risk does not guarantee a profit.
 """ + FINDINGS_RULES
 
 WRITER_PROMPT = """You are the Writer in a team that explains one proposed options trade to a beginner.
@@ -89,6 +91,9 @@ Rules:
 - Every number must be copied from the findings or evidence; never calculate or invent numbers.
 - Use the liquidity rating as given. Label volatility-drop prices as scenarios, not forecasts.
 - Give the alternative's expiration whenever it differs from the original contract's.
+- In Lower-risk alternative, state in plain words every trade-off listed for the selected alternative
+  (for example that its gain is capped, that its short leg can be assigned early, that it collects a
+  credit): a lower maximum loss alone can mislead.
 - Never recommend buying, selling or a position size.
 - Describe outcomes as possibilities (may, could, in this scenario); never write that a price will rise or
   fall, or that anything is certain, guaranteed or without risk.
