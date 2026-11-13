@@ -61,7 +61,10 @@ SCENARIO_COVERS = {
     ("MSFT", "call"): "deep in the money", ("KO", "put"): "far out of the money, long-dated; no earnings date in the data",
     ("F", "put"): "low-priced stock; no earnings date in the data", ("AMD", "call"): "long-dated (120+ days)",
 }
-SPEC_SETS = {"core": CONTRACT_SPECS, "scenarios": SCENARIO_SPECS}
+# Missing-data set: six scenario contracts, one piece of data removed each
+# (scripts/make_missing_data_snapshot.py -> data/snapshots/2026-11-13-missing.json.gz).
+MISSING_SPECS = [s for s in SCENARIO_SPECS if s[0] in ("WMT", "HD", "MSFT", "AMD", "SPY", "KO")]
+SPEC_SETS = {"core": CONTRACT_SPECS, "scenarios": SCENARIO_SPECS, "missing": MISSING_SPECS}
 SETUPS = {
     "no_retrieval": {"use_retrieval": False, "verify_report": False},
     "retrieval": {"use_retrieval": True, "verify_report": False},

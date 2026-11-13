@@ -17,9 +17,9 @@ LOW_CHANCE = 0.15     # below this chance of finishing beyond breakeven, the sam
 def chance_beyond_breakeven(option_type: str, stock_price: float, breakeven: float, days: int, iv_pct: float,
                             rate: float = config.RISK_FREE_RATE) -> float | None:
     """Risk-neutral probability that the stock finishes past the breakeven at expiry."""
+    if not iv_pct or not stock_price or not breakeven or iv_pct <= 0 or stock_price <= 0 or breakeven <= 0:
+        return None  # missing data: no estimate rather than a wrong one
     years, iv = max(days, 0.5) / 365, iv_pct / 100
-    if stock_price <= 0 or breakeven <= 0 or iv <= 0:
-        return None
     d2 = (math.log(stock_price / breakeven) + (rate - iv * iv / 2) * years) / (iv * math.sqrt(years))
     above = 0.5 * (1 + math.erf(d2 / math.sqrt(2)))
     return above if option_type == "call" else 1 - above
@@ -34,6 +34,10 @@ def flags(contract: dict) -> list[dict]:
                     "message": f"Only {days} day{'s' if days != 1 else ''} to expiry: time decay is fastest now "
                                "and the option can lose most of its value in a day."})
     quality = contract.get("data_quality", {})
+    if quality.get("missing"):
+        out.append({"id": "missing_data", "missing": quality["missing"],
+                    "message": "Data missing: " + "; ".join(quality["missing"]) + ". Treat this analysis as low "
+                               "confidence."})
     liquidity = quality.get("liquidity", {})
     if liquidity.get("rating") == "poor":
         issues = ", ".join(liquidity.get("issues", [])) or "spread, volume or open interest"

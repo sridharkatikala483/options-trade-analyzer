@@ -408,5 +408,15 @@ Same snapshot and 10 contracts x 3 setups, `claude-haiku-5-5`, every guardrail o
       5+ points lower); the search output carries the list, the prompts ask for it, and the verifier sends back a
       report that leaves one out. On the saved reports, assignment risk was missing in 19 of 20 Haiku and 20 of
       21 qwen3 reports with a spread; qwen3 also left out the capped gain in 17 of 21
-- [ ] Week 5 feedback, part 3b: synthetic missing-data cases; hand-scoring rubric for judgment errors; Haiku run
-      on the scenario set
+- [x] Week 5 feedback, part 3b: missing-data cases (`scripts/make_missing_data_snapshot.py` ->
+      `data/snapshots/2026-11-13-missing.json.gz`, `--specs missing`): six scenario contracts with one gap each
+      (blank implied volatility, no price history, no headlines, later chains not loaded, no bid or ask, no
+      earnings date). They found four failures, now fixed: a blank IV flowed on as NaN and crashed the
+      alternative search; a failed history call raised instead of returning an error; one unloadable chain
+      crashed the search; no bid or ask went unflagged (with a meaningless 3.7% IV). Now the contract tool lists
+      `data_quality.missing`, every tool turns a failed source into {"error": "data unavailable ..."}, the search
+      skips an expiration it cannot load, and missing data or a failed source holds the run for review
+- [x] Hand-scoring rubric for judgment errors (`docs/evaluation/hand_scoring.md`): procedure, seven
+      categories with examples from our runs, severity, borderline rules; decisions go to
+      `data/answer_keys/hand_checks.json`
+- [ ] Haiku run on the scenario and missing-data sets

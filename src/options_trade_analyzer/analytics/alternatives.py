@@ -70,11 +70,12 @@ class Quote:
 
 
 def _quotes(chain: pd.DataFrame) -> dict[float, Quote]:
-    """Two-sided quotes by strike; rows without a bid and an ask are left out."""
+    """Two-sided quotes by strike; rows without a bid and an ask, or without an implied volatility to price
+    them with, are left out."""
     quotes = {}
     for row in chain.itertuples():
-        bid, ask = float(row.bid), float(row.ask)
-        if bid <= 0 or ask <= 0:
+        bid, ask, iv = float(row.bid), float(row.ask), float(row.impliedVolatility)
+        if bid <= 0 or ask <= 0 or not iv > 0:  # "not iv > 0" is also true for NaN
             continue
         volume = int(row.volume) if row.volume == row.volume else 0
         open_interest = int(row.openInterest) if row.openInterest == row.openInterest else 0
@@ -96,8 +97,11 @@ class Market:
 
     def quotes(self, expiration: str, option_type: OptionType) -> dict[float, Quote]:
         if expiration not in self._chains:
-            raw = self.provider.get_option_chain(self.ticker, expiration)
-            self._chains[expiration] = {kind: _quotes(raw[f"{kind}s"]) for kind in ("call", "put")}
+            try:
+                raw = self.provider.get_option_chain(self.ticker, expiration)
+                self._chains[expiration] = {kind: _quotes(raw[f"{kind}s"]) for kind in ("call", "put")}
+            except Exception:  # noqa: BLE001 - a chain that fails to load leaves that expiration without candidates
+                self._chains[expiration] = {"call": {}, "put": {}}
         return self._chains[expiration][option_type]
 
     @property

@@ -87,12 +87,14 @@ tests/test_team.py                      team wiring with stand-in LLM calls: joi
 tests/test_risk_metrics.py              risk-adjusted measures on the same synthetic chain
 tests/test_injection.py                 injection patterns, ordinary headlines pass, news tool withholds and holds the run
 tests/test_acceptance.py                acceptance thresholds, measures from saved runs, hand-confirmed false alarms
+tests/test_missing_data.py              missing IV or bid/ask reported, failed sources become errors, run held
 tests/test_review.py                    outcome rules, run log round trip, review queue and decisions
 tests/test_input_risk.py                input risk flags and the chance-beyond-breakeven estimate
 tests/test_answer_keys.py               answer-key items and scoring on short reports with planted mistakes
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
 scripts/evaluate.py                     10 contracts x 3 setups, resumable -> docs/evaluation/ (hours on local qwen3)
 scripts/score_reports.py                score reports against answer keys + acceptance gate -> docs/evaluation/quality_<name>.md
+scripts/make_missing_data_snapshot.py   scenario snapshot with one gap per contract -> data/snapshots/2026-11-13-missing.json.gz
 scripts/injection_eval.py               injection monitor on planted (direct, paraphrased, held-out) and 914 real headlines
 scripts/evaluate_tot.py                 ToT vs fixed spread vs exhaustive, plus risk-adjusted measures -> docs/evaluation/tot_summary*.md
 data/knowledge/                         synthetic options-education notes (the RAG corpus)
@@ -138,6 +140,8 @@ Key seams to keep intact:
 - `TOT_PROPOSER=rules` runs the alternative search without LLM calls (default `llm`); off-menu or
   unparseable proposals fall back to the default choices and are counted in the tool output.
 - `FINNHUB_API_KEY` and the Schwab keys are defined in `.env.example` but not used by code yet.
+- Hand-score judgment errors with `docs/evaluation/hand_scoring.md`; record each ruled-out answer-key flag in
+  `data/answer_keys/hand_checks.json` with a note.
 - Tests should be deterministic and offline (no network, no LLM). Use `data/snapshots/` for market data.
 - Never call `date.today()` or `datetime.now()` directly: use `clock.today()` / `clock.now()`, or a snapshot
   replay will see the wrong day (days to expiry, quote age and news age all drift). Log timestamps (when a
