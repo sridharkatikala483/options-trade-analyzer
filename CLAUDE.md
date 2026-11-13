@@ -49,6 +49,8 @@ src/options_trade_analyzer/
   analytics/strategies.py               multi-leg payoff math (Leg, max loss/gain, breakevens) for comparisons
   analytics/alternatives.py             ToT candidates: build, score out of 100, prune, rank (deterministic)
   analytics/trend.py                    price trend from daily closes (1m/3m change, 50-day average, range)
+  analytics/input_risk.py               risk flags on the contract itself (short expiry, poor liquidity, closed
+                                        market, low chance beyond breakeven), shown above the report
   analytics/risk_metrics.py             risk-adjusted measures: expected P/L (Black-Scholes and past moves),
                                         bid-ask cost, IV shifts, max gain per $ risked
   retrieval/vector_index.py             numpy vector index: cosine search, similarity floor, MMR
@@ -64,7 +66,8 @@ src/options_trade_analyzer/
                                         routing fixes to the owning agent; analyze_contract_team(...)
   agents/critic.py                      LLM Critic: judgment checklist after the rules pass; JSON reply names the owner
   agents/verifier.py                    rule-based report checks: tool completeness, numbers, dates,
-                                        liquidity wording, citations, no advice, required statements
+                                        liquidity wording, citations, no advice, required statements,
+                                        overconfident wording
 scripts/record_snapshot.py              record the evaluation contracts' market data -> data/snapshots/<date>.json.gz
 scripts/check_setup.py                  environment smoke test (exits 1 on failure)
 tests/test_options_math.py              textbook-value tests for the math
@@ -77,6 +80,7 @@ tests/test_snapshot.py                  record/replay round trip; a later replay
 tests/test_jobs.py                      background jobs: progress wording, one at a time, errors kept
 tests/test_team.py                      team wiring with stand-in LLM calls: join, routing, failures, stop
 tests/test_risk_metrics.py              risk-adjusted measures on the same synthetic chain
+tests/test_input_risk.py                input risk flags and the chance-beyond-breakeven estimate
 tests/test_answer_keys.py               answer-key items and scoring on short reports with planted mistakes
 scripts/retrieval_demo.py               with/without-retrieval comparison -> docs/retrieval_demo.md
 scripts/evaluate.py                     10 contracts x 3 setups, resumable -> docs/evaluation/ (hours on local qwen3)

@@ -340,3 +340,11 @@ Snapshot `data/snapshots/2026-11-06.json.gz`, 10 contracts x 3 setups, qwen3:8b;
 - [x] Fix for the shared gaps: required sentences in both prompts, a rule check for them, a sharper Critic
       earnings check
 - [ ] Repeat the comparison with the fix (Claude Haiku: about 40 min, about 30 cents)
+- [x] Checkpoint 6 guardrails, part 1: overconfidence check in the rule verifier (certainty words, skipped when
+      the sentence hedges; on the 30 saved reports it flags the one real case, "No risk (earnings are after
+      expiration)", and nothing else; known gap: "guaranteed if ..." passes, left to Critic check 4) and input
+      risk flags computed by code (`analytics/input_risk.py`: 2 days or fewer, poor liquidity, closed-market
+      quote, under 15% risk-neutral chance beyond breakeven), shown above the report and given to the Writer.
+      The snapshot has no short-expiry or low-chance contract (closest: F at 16.7%), so those two are tested on
+      synthetic contracts only
+- [ ] Checkpoint 6 part 2: review queue and run log; injection monitor for headlines

@@ -9,6 +9,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.prebuilt import create_react_agent
 
 from options_trade_analyzer import config
+from options_trade_analyzer.analytics import input_risk
 from options_trade_analyzer.agents.tools import CORE_TOOLS, RETRIEVAL_TOOLS, TOT_TOOLS
 from options_trade_analyzer.agents.verifier import Verification, revision_request, verify
 
@@ -40,6 +41,8 @@ Rules:
 - State the stock price, spread, volume and open interest exactly as get_option_contract returned them.
 - If a tool returns an error, fix the input and try again.
 - Do not recommend buying, selling or any position size; describe risks only.
+- Describe outcomes as possibilities (may, could, in this scenario); never write that a price will rise or
+  fall, or that anything is certain, guaranteed or without risk.
 - If earnings fall AFTER the expiration, they cannot affect this option: say exactly that once, and never
   list them under Main risks or What to watch.
 
@@ -81,6 +84,7 @@ class AnalysisResult:
     tokens: dict = field(default_factory=lambda: {"input": 0, "output": 0})
     findings: dict = field(default_factory=dict)  # multi-agent runs: each agent's final findings
     routing: list[dict] = field(default_factory=list)  # multi-agent runs: which agent got which fix
+    flags: list[dict] = field(default_factory=list)  # input risk flags, computed by code (shown above the report)
 
 
 def build_agent(use_retrieval: bool = True, use_tot: bool = False):
@@ -114,6 +118,19 @@ def to_trace(messages) -> list[dict]:
         elif isinstance(message, HumanMessage) and trace:
             trace.append({"step": "Critic", "text": message.text})
     return trace
+
+
+def input_flags(trace: list[dict]) -> list[dict]:
+    """Risk flags for the contract the run looked up (its first successful get_option_contract result)."""
+    for step in trace:
+        if step["step"] == "Observation" and step.get("tool") == "get_option_contract":
+            try:
+                contract = json.loads(step["text"])
+            except json.JSONDecodeError:
+                continue
+            if "error" not in contract:
+                return input_risk.flags(contract)
+    return []
 
 
 def _token_usage(messages) -> dict:
@@ -157,4 +174,5 @@ def analyze_contract(ticker: str, option_type: str, strike: float, expiration: s
         first_draft_verification=first,
         revisions=revisions,
         tokens=_token_usage(state["messages"]),
+        flags=input_flags(trace),
     )

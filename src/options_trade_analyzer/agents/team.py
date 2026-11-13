@@ -32,8 +32,9 @@ from options_trade_analyzer import config
 from options_trade_analyzer.agents import critic as llm_critic
 from options_trade_analyzer.agents import tools
 from options_trade_analyzer.agents.options_agent import (MAX_REVISIONS, MAX_STEPS, AnalysisResult,
-                                                         _token_usage, to_trace)
+                                                         _token_usage, input_flags, to_trace)
 from options_trade_analyzer.agents.verifier import Verification, verify
+from options_trade_analyzer.analytics import input_risk
 from options_trade_analyzer.data import CachingProvider
 
 SPECIALISTS = ("options_analyst", "market_context", "risk_strategist")
@@ -87,7 +88,10 @@ Rules:
 - Use the liquidity rating as given. Label volatility-drop prices as scenarios, not forecasts.
 - Give the alternative's expiration whenever it differs from the original contract's.
 - Never recommend buying, selling or a position size.
+- Describe outcomes as possibilities (may, could, in this scenario); never write that a price will rise or
+  fall, or that anything is certain, guaranteed or without risk.
 - If a specialist failed, say which part of the analysis is missing.
+- If the evidence has input_risk_flags, explain each flag in Data quality or Main risks.
 - The [tool] tags in the findings are for checking only: do not copy them into the report.
 - If earnings fall AFTER the expiration, they cannot affect this option: say exactly that once, and never
   list them under Main risks or What to watch.
@@ -236,7 +240,12 @@ class Team:
         if "error" in contract:
             return {"error": contract["error"], "coordinator_trace": [step],
                     "report": f"The request could not be analyzed: {contract['error']}."}
-        return {"contract": contract, "coordinator_trace": [step]}
+        flags = input_risk.flags(contract)
+        steps = [step]
+        if flags:  # evidence for the Writer; its numbers then count as tool output for the verifier
+            steps.append({"step": "Observation", "tool": "input_risk_flags", "args": {}, "agent": "coordinator",
+                          "text": json.dumps({"flags": flags})})
+        return {"contract": contract, "coordinator_trace": steps}
 
     def options_analyst(self, state: TeamState) -> dict:
         task = f"{self.task}\nContract from the Coordinator [get_option_contract]:\n{json.dumps(state['contract'])}"
@@ -392,6 +401,7 @@ class Team:
             tokens=tokens,
             findings={name: (run.findings or f"FAILED: {run.error}") for name, run in runs.items()},
             routing=state.get("routing", []),
+            flags=input_flags(self.trace(state)),
         )
 
 

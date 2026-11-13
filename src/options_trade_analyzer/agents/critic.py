@@ -33,7 +33,8 @@ Check only these, and only flag clear problems you can point to in the evidence:
    they "may impact" or "could affect" the stock or its volatility before expiry. Saying they fall after
    expiry and cannot affect this option is correct; general background about earnings is not a problem.
 3. The alternative's expiration left out when it differs from the original contract's expiration.
-4. A volatility-drop price or a probability presented as a forecast instead of a scenario or estimate.
+4. A volatility-drop price or a probability presented as a forecast instead of a scenario or estimate,
+   or any outcome stated as certain or guaranteed (including "guaranteed if ...").
 5. No statement that lower risk does not guarantee a profit.
 6. Two findings that conflict without the report explaining it (for example a rising trend but too
    little time left, or an alternative the evidence rates poorly).

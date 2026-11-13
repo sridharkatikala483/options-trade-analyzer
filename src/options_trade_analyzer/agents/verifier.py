@@ -43,6 +43,16 @@ SMALL_INT_LIMIT = 12  # counts such as "2 rounds" or "3 risks" are not checked
 # ("crush occurs only if earnings are before expiry") as real mistakes on the 30 comparison reports.
 NO_GUARANTEE = re.compile(r"\b(not|no|never|doesn't|don't|isn't)\b[^.\n]{0,30}\bguarantee", re.I)
 ALTERNATIVE_TOOLS = ("compare_strategies", "search_alternatives")
+# Overconfident wording (Lab 6.1's during-generation check): certainty about prices or outcomes. A sentence
+# that already hedges is left alone; "always"/"never" are not listed because, on the 30 comparison reports,
+# they only appeared in advice to the reader ("always verify with up-to-date data").
+OVERCONFIDENT = re.compile(
+    r"\b(certain(ly)?|definitely|undoubtedly|surely|sure to|bound to|proven|without (a )?doubt"
+    r"|no risk|risk[- ]free|zero risk|can(no|')t lose|cannot lose|safe bet|guarantee[sd]?"
+    r"|will (rise|fall|increase|decrease|drop|go up|go down|climb|rally|recover|reach|gain|surge|plunge|decline))\b",
+    re.I)
+HEDGED = re.compile(r"\b(scenario|estimate[sd]?|may|might|could|if|assum\w*|not a forecast)\b", re.I)
+SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
 
 
 @dataclass
@@ -241,6 +251,9 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
     # --- required statements ---
     statement_issues = statement_problems(report, any(c.name in ALTERNATIVE_TOOLS for c in calls))
     v.issues += statement_issues
+    overconfident = overconfident_sentences(report)
+    for sentence in overconfident:
+        v.issues.append(f"Overconfident wording; describe it as a possibility, scenario or estimate: \"{sentence[:160]}\"")
 
     # --- no advice ---
     if RECOMMENDATION.search(report):
@@ -261,6 +274,7 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
         if total_citations else None,
         "recommendation": bool(RECOMMENDATION.search(report)),
         "statement_issues": len(statement_issues),
+        "overconfident_sentences": len(overconfident),
     }
     return v
 
@@ -268,6 +282,19 @@ def verify(report: str, trace: list[dict], request: dict, use_retrieval: bool, u
 def mentions_model_limits(report: str) -> bool:
     low = report.lower()
     return "black-scholes" in low and any(w in low for w in ("american", "early exercise", "approximat"))
+
+
+def overconfident_sentences(report: str) -> list[str]:
+    """Sentences stating an outcome as certain. "Does not guarantee a profit" is the required hedge, not a claim."""
+    found = []
+    for sentence in SENTENCE.split(report):
+        match = OVERCONFIDENT.search(sentence)
+        if not match or HEDGED.search(sentence):
+            continue
+        if match.group(0).lower().startswith("guarantee") and NO_GUARANTEE.search(sentence):
+            continue
+        found.append(sentence.strip())
+    return found
 
 
 def statement_problems(report: str, has_alternative: bool) -> list[str]:

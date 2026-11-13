@@ -8,6 +8,8 @@ remark contradicting the 'good' rating.
 
 import json
 
+import pytest
+
 from options_trade_analyzer.agents import verifier
 from options_trade_analyzer.agents.verifier import verify
 
@@ -166,3 +168,37 @@ def test_no_guarantee_is_required_only_when_an_alternative_was_searched():
 def test_a_missing_statement_goes_back_to_the_writer():
     from options_trade_analyzer.agents.team import route
     assert list(route(verifier.statement_problems("Summary.", has_alternative=True))) == ["writer"]
+
+
+# --- overconfident wording (Lab 6.1 during-generation check) ---
+
+@pytest.mark.parametrize("sentence", [
+    "The stock will rise above the breakeven.",
+    "This spread is risk-free.",
+    "Volatility crush: No risk (earnings are after expiration).",  # the one real case in the 30 reports
+    "Profit is guaranteed with this spread.",
+    "The option will certainly expire in the money.",
+])
+def test_overconfident_sentences_are_flagged(sentence):
+    assert verifier.overconfident_sentences(sentence) == [sentence]
+
+
+@pytest.mark.parametrize("sentence", [
+    "Lower risk does not guarantee a profit.",
+    "In this scenario, the price could fall to $4.51.",
+    "Model assumes volatility will drop post-earnings, but this is a scenario, not a forecast.",
+    "Always verify with up-to-date data.",
+])
+def test_hedged_or_required_sentences_pass(sentence):
+    assert verifier.overconfident_sentences(sentence) == []
+
+
+def test_known_gap_a_conditional_certainty_is_not_flagged():
+    # "if" counts as hedging so conditional explanations pass; the LLM Critic must catch this kind
+    assert verifier.overconfident_sentences("Profit is guaranteed if the trend holds up.") == []
+
+
+def test_overconfident_wording_goes_back_to_the_writer():
+    from options_trade_analyzer.agents.team import route
+    issue = f"Overconfident wording; describe it as a possibility, scenario or estimate: \"x\""
+    assert list(route([issue])) == ["writer"]

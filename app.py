@@ -30,6 +30,7 @@ CHECKS = [("Required tools used", "tool_completeness", "{:.0%}"), ("Unsupported 
           ("Date errors", "date_errors", "{}"), ("Liquidity contradictions", "liquidity_contradictions", "{}"),
           ("Invalid citations", "invalid_citations", "{}"), ("Recommendations", "recommendation", "{}"),
           ("Required statements missing or wrong", "statement_issues", "{}"),
+          ("Overconfident sentences", "overconfident_sentences", "{}"),
           ("Judgment issues (LLM Critic)", "judgment_issues", "{}")]
 LEG = re.compile(r"(buy|sell) (\d+) ([\d.]+) (call|put) @ ([\d.]+)")
 
@@ -186,6 +187,9 @@ if result:
     report_tab, agents_tab, critic_tab, details_tab, steps_tab = st.tabs(
         ["Report", "Agents' findings", "Critic", "Run details", "Timeline"])
     with report_tab:
+        if result.flags:  # computed by code from the contract, not by the agents
+            st.warning("**Before you read: this contract has risk flags**\n\n"
+                       + "\n".join(f"- {money(f['message'])}" for f in result.flags))
         st.markdown(money(result.report))
     with agents_tab:
         calls = defaultdict(list)

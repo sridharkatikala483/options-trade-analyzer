@@ -194,3 +194,13 @@ def test_progress_is_reported_as_each_agent_finishes(script):
     run(on_step=lambda node, update: steps.append(node))
     assert steps[0] == "coordinator" and set(steps[1:3]) == {"options_analyst", "market_context"}
     assert steps[3:] == ["risk_strategist", "writer", "critic"]
+
+
+def test_input_risk_flags_reach_the_writer_and_the_result(script, monkeypatch):
+    risky = CONTRACT | {"option_type": "call", "days_to_expiry": 2,
+                        "data_quality": {"liquidity": {"rating": "poor", "issues": ["spread"]}}}
+    s = script()
+    monkeypatch.setattr(tools, "get_option_contract", FakeContractTool(risky))
+    result = run()
+    assert [f["id"] for f in result.flags] == ["short_expiry", "poor_liquidity", "low_chance"]
+    assert "[input_risk_flags]" in s.writer_inputs[0]
