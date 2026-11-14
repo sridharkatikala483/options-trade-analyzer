@@ -340,6 +340,29 @@ Same snapshot and 10 contracts x 3 setups, `claude-haiku-5-5`, every guardrail o
 - Not fixed: the news search for SPY also returns entertainment headlines from the outlet Digital Spy
   (a relevance problem, not a safety one).
 
+## Checkpoint 4 feedback, finished on Claude Haiku (22 contracts)
+
+**LLM proposer vs rule proposer** (`scripts/evaluate_tot.py --specs core|scenarios`, results
+`docs/evaluation/tot_summary_haiku_core.md`, `tot_summary_haiku_scenarios.md`). On 22 contracts (before: 7),
+both found a usable alternative in 11 and neither in 11 (illiquid legs, same-day expiry, very low chance); never
+only one. Where both did, the LLM scored higher in 7, equal in 4, lower in 0, with 0 of 75 proposals falling
+back to defaults, 7-10 s per search. In those 7 the LLM picks had a lower maximum loss ($347 vs $429 on average)
+and a higher chance of profit (47% vs 42% Black-Scholes, 48% vs 40% on the past 2 years of moves), but a lower
+maximum gain per dollar risked (1.54 vs 1.71), and 4 of 7 were credit spreads (rules: 2 of 7). Expected profit
+from past moves was near zero or negative for both (-$17 vs -$21): narrower spreads trade upside for odds,
+not for an edge.
+
+**Recommendation quality with vs without ToT** (single agent, `retrieval_verified` vs
+`retrieval_verified_tot`, 22 contracts each). Facts and rule checks are about equal (99-100% of answer-key
+facts both ways; 22 of 22 vs 20 of 22 final reports passing, the two failures a date error each). The difference
+is the alternative recommended. Without ToT the agent offered the fixed spread in 22 of 22 contracts, and 15 of
+those spreads fail the search's rules (14 have a leg rated poor liquidity, 1 has under a 15% chance beyond
+breakeven); `compare_strategies` reports no liquidity, so no report could warn. Only 4 of 22 stated the short
+leg's assignment risk. With ToT, an alternative that fails the rules is never offered ("no qualifying
+alternative" in 11 of 22), and every required trade-off was stated. Counts use the rubric's "unstated
+trade-off" category with the verifier's trade-off patterns and the search's pruning rules, not a full hand read.
+Cost and time: 30 s vs 22 s per run, similar tokens.
+
 ## Technology choices
 
 - Python 3.12 via uv; LangGraph for orchestration; LangChain model integrations.
@@ -374,8 +397,8 @@ Same snapshot and 10 contracts x 3 setups, `claude-haiku-5-5`, every guardrail o
 - [x] Risk-adjusted comparison of the picks (Checkpoint 4 feedback; `analytics/risk_metrics.py`,
       `docs/evaluation/tot_summary_risk.md`); score fix: 15% chance floor + bid-ask cost in risk points
       (same data scored both ways: `tot_summary_scored_checkpoint4.md` vs `tot_summary_scored.md`)
-- [ ] LLM vs rule proposer on a larger, more diverse contract set (Checkpoint 4 feedback)
-- [ ] Recommendation-quality rubric for the with/without-ToT reports (Checkpoint 4 feedback)
+- [x] LLM vs rule proposer on a larger, more diverse contract set (Checkpoint 4 feedback; 22 contracts on Haiku)
+- [x] Recommendation quality with vs without ToT (Checkpoint 4 feedback; 22 contracts on Haiku, results above)
 - [ ] SQLite long-term memory and comparison with past analyses
 - [x] Report shown in the dashboard (`app.py`): "Run AI analysis" runs the team with live per-agent progress;
       report, each agent's findings and tool calls, the Critic's checks (first draft vs final) and fixes sent,

@@ -19,6 +19,7 @@ expected profit and chance of profit under Black-Scholes and under the stock's o
 moves, bid-ask cost, value change under implied-volatility shifts, and maximum gain per dollar risked.
 
 Run with:  uv run python scripts/evaluate_tot.py            # 10 contracts, ~1 min each with the LLM
+           --specs scenarios                                  # the 12-contract scenario snapshot
            uv run python scripts/evaluate_tot.py --no-llm   # seconds
            --out NAME writes tot_results_NAME.json / tot_summary_NAME.md (keeps earlier results)
            --before-after also scores the same cached data the Checkpoint 4 way (no lottery-ticket floor,
@@ -31,7 +32,7 @@ import re
 import time
 from datetime import datetime
 
-from evaluate import CONTRACT_SPECS, CachingProvider, resolve
+from evaluate import SPEC_SETS, CachingProvider, resolve
 
 from options_trade_analyzer import config
 from options_trade_analyzer.agents import tools, tot_search
@@ -276,21 +277,22 @@ def use_checkpoint4_score(on: bool) -> None:
 CURRENT_MIN_CHANCE = alt.MIN_CHANCE
 
 
-def main(limit: int | None, use_llm: bool, out: str | None = None, before_after: bool = False) -> None:
+def main(limit: int | None, use_llm: bool, out: str | None = None, before_after: bool = False,
+         specs: str = "core") -> None:
     provider = CachingProvider(get_provider(config.DATA_PROVIDER))
     tools.provider = provider  # compare_strategies reads the same cached data
     if before_after:  # same cached market data for both scorings
         use_checkpoint4_score(True)
-        run_all(limit, use_llm, f"{out or 'run'}_checkpoint4", provider)
+        run_all(limit, use_llm, f"{out or 'run'}_checkpoint4", provider, specs)
         use_checkpoint4_score(False)
-    run_all(limit, use_llm, out, provider)
+    run_all(limit, use_llm, out, provider, specs)
 
 
-def run_all(limit: int | None, use_llm: bool, out: str | None, provider) -> None:
+def run_all(limit: int | None, use_llm: bool, out: str | None, provider, specs: str = "core") -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     suffix = f"_{out}" if out else ""
     rows = []
-    for spec in CONTRACT_SPECS[:limit]:
+    for spec in SPEC_SETS[specs][:limit]:
         try:
             contract = resolve(provider, *spec)
             print(f"{contract['ticker']} {contract['strike']:g} {contract['option_type']} {contract['expiration']} ...", flush=True)
@@ -309,5 +311,6 @@ if __name__ == "__main__":
     parser.add_argument("--no-llm", action="store_true", help="skip the LLM-proposer search")
     parser.add_argument("--out", default=None, help="name for separate results/summary files")
     parser.add_argument("--before-after", action="store_true", help="also score with the Checkpoint 4 rules")
+    parser.add_argument("--specs", default="core", choices=list(SPEC_SETS), help="contract set: core or scenarios")
     args = parser.parse_args()
-    main(args.limit, not args.no_llm, args.out, args.before_after)
+    main(args.limit, not args.no_llm, args.out, args.before_after, args.specs)

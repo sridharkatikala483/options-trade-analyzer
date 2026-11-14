@@ -152,5 +152,5 @@ Key seams to keep intact:
 
 ## Planned next steps (from DESIGN.md)
 
-Repeat the comparison with the required-statement fix on Claude Haiku → SQLite memory →
-LLM vs rule proposer on more contracts.
+SQLite long-term memory (compare with past analyses) → news relevance (ticker searches such as SPY also match
+unrelated outlets) → final report and demo. `.env` now runs Claude Haiku (`LLM_PROVIDER=anthropic`).
