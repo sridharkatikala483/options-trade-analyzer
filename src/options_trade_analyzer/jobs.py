@@ -7,6 +7,8 @@ outlives the page. One run at a time, because the local model serves one request
 
 import threading
 import time
+
+from options_trade_analyzer import config
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -66,8 +68,8 @@ class Job:
         if last == "risk_strategist":
             return "Writer is drafting the report"
         if last in ("writer",):
-            return "Critic is checking the report" + (
-                " (rules first, then the LLM review: the slowest step on a local model)" if self.llm_critic else "")
+            slow = ": the slowest step on a local model" if config.LLM_PROVIDER == "ollama" else ""
+            return "Critic is checking the report" + (f" (rules first, then the LLM review{slow})" if self.llm_critic else "")
         if last == "critic":
             return "The agents responsible are fixing the Critic's issues"
         if last == "revise":
