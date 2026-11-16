@@ -54,8 +54,11 @@ OWNERS = {  # tool -> the agent that must call it
 FINDINGS_RULES = """Finish with your findings: one short line per claim, each ending with the tool it came
 from in brackets, e.g. "Theta is <theta_per_contract_per_day> dollars per contract per day [compute_greeks]".
 Only report what YOUR tools returned in this run; leave other topics to the other agents. Copy every
-number exactly from a tool result; never calculate or invent numbers. Mark anything stale, missing or failed
-with "(low confidence)". Education only: never recommend buying, selling or a position size."""
+number exactly from a tool result; never calculate or invent numbers. Add "(low confidence)" only where a
+tool result marks a problem: a quote status other than "fresh", a model-vs-market gap_flag of true, a
+missing field, an error or a failed source. A small gap with gap_flag false means the model and the market
+agree. Never mark another agent's fact low confidence because your tools did not check it.
+Education only: never recommend buying, selling or a position size."""
 
 OPTIONS_PROMPT = """You are the Options Analyst in a team that explains one proposed options trade to a
 beginner. You own the contract itself. The Coordinator already looked it up; the result is in the task.
@@ -98,6 +101,10 @@ Rules:
 - Describe outcomes as possibilities (may, could, in this scenario); never write that a price will rise or
   fall, or that anything is certain, guaranteed or without risk.
 - If a specialist failed, say which part of the analysis is missing.
+- Call something low confidence only when the evidence shows a problem with it (a quote that is not
+  fresh, gap_flag true, missing data, a failed source, withheld headlines), and say what the problem is.
+  Facts the owning agent's tool returned without a problem (the earnings date from get_earnings_date, a
+  model price close to the market price) are not low confidence.
 - If the evidence has input_risk_flags, explain each flag in Data quality or Main risks.
 - The [tool] tags in the findings are for checking only: do not copy them into the report.
 - If earnings fall AFTER the expiration, they cannot affect this option: say exactly that once, and never
