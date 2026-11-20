@@ -430,6 +430,14 @@ Cost and time: 30 s vs 22 s per run, similar tokens.
       the team with the LLM Critic held 2 of 10, both because qwen3's Critic reply had no JSON. Timestamps use
       `clock.wall_now()` (a replay freezes market time, not review time). Not covered: a fallback-data trigger
       (no fallback signal exists yet) and refusal for the single agent (only the team reports an invalid request)
+- [x] Review priority (Checkpoint 6 feedback, `review.priority`): the queue is sorted most dangerous first,
+      oldest first within a level. The worst problem in a held run sets its level: **critical** = an untraced
+      number in a sentence about maximum loss, breakeven, cost or chance, advice, a tool called with the wrong
+      strike or expiration, or a withheld injection headline; **high** = other untraced numbers or dates,
+      overconfident wording, a missing trade-off or required statement, a failed specialist or crash;
+      **medium** = a missing tool call, citation mismatch, revision talk, a failed data source or an unreadable
+      Critic reply; **low** = missing market data the report already labels. An unknown issue counts as high
+      (fail safe). The dashboard shows the level and the problem that set it
 - [x] Injection monitor for headlines (`injection.py`, `scripts/injection_eval.py` -> `docs/evaluation/injection.md`):
       every fresh headline is scanned before the agents see it; a flagged one is withheld (source, date and
       reason only) and the run is held for review; prompts frame headlines as information, never instructions.

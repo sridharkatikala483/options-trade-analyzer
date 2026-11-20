@@ -68,3 +68,45 @@ def test_the_queue_holds_undecided_reviews_oldest_first(tmp_path):
 def test_an_edit_needs_the_edited_report(tmp_path):
     with pytest.raises(ValueError):
         review.log_review("abc", "edited", log_dir=tmp_path)
+
+
+# --- review priority ---
+
+REPORT = "The maximum loss is $520 per contract. Delta is 0.41. The stock last closed at 101.2."
+
+
+@pytest.mark.parametrize("record, level", [
+    ({"issues": ["Number not found in any tool result: $520."]}, "critical"),     # a made-up maximum loss
+    ({"issues": ["Number not found in any tool result: 0.41."]}, "high"),         # a made-up Greek
+    ({"issues": ["Report contains a recommendation; describe risks only."]}, "critical"),
+    ({"issues": ["compute_greeks was called with strike 105, not the requested 100."]}, "critical"),
+    ({"issues": ["Missing statement: lower risk does not guarantee a profit."]}, "high"),
+    ({"issues": ["Citation [KB: notes.md] does not match any passage retrieved in this run."]}, "medium"),
+    ({"issues": ["Something new the verifier says."]}, "high"),                   # unknown: fail safe
+    ({"reasons": ["1 headline(s) read like instructions to an AI and were withheld; check that the report "
+                  "was not steered."]}, "critical"),
+    ({"reasons": ["A data source failed and was not recovered (get_price_trend), so part of the analysis "
+                  "is missing."]}, "medium"),
+    ({"reasons": ["Market data was missing (implied volatility), so the analysis is low confidence."]}, "low"),
+])
+def test_priority_follows_the_most_dangerous_problem(record, level):
+    assert review.priority({"report": REPORT} | record)["level"] == level
+
+
+def test_the_worst_problem_decides_and_is_named():
+    p = review.priority({"report": REPORT, "issues": ["Number not found in any tool result: 0.41.",
+                                                      "Number not found in any tool result: $520."],
+                         "reasons": ["Market data was missing (bid/ask), so the analysis is low confidence."]})
+    assert p["level"] == "critical" and "$520" in p["why"] and p["count"] == 1
+
+
+def test_the_queue_puts_dangerous_runs_first_then_oldest(tmp_path):
+    def held(issue):
+        v = Verification([issue], {})
+        return review.run_and_log(REQUEST, {}, lambda: AnalysisResult(REPORT, [], v, v, findings={}), log_dir=tmp_path)
+    citation = held("Citation [KB: a.md] does not match any passage retrieved in this run.")
+    greek = held("Number not found in any tool result: 0.41.")
+    max_loss = held("Number not found in any tool result: $520.")
+    greek_later = held("Number not found in any tool result: 101.2.")
+    order = [r["run_id"] for r in review.queue(tmp_path)]
+    assert order == [max_loss.run_id, greek.run_id, greek_later.run_id, citation.run_id]

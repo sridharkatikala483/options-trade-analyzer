@@ -91,8 +91,13 @@ def review_page() -> None:
     if not pending:
         st.success("Nothing is waiting for review.")
     else:
-        labels = [f"{r['started'][:16].replace('T', ' ')} UTC · {contract_label(r['request'])}" for r in pending]
-        run = pending[st.selectbox("Run (oldest first)", range(len(pending)), format_func=labels.__getitem__)]
+        labels = [f"{r['priority']['level'].upper()} · {r['started'][:16].replace('T', ' ')} UTC · "
+                  f"{contract_label(r['request'])}" for r in pending]
+        run = pending[st.selectbox("Run (most dangerous first, then oldest)", range(len(pending)),
+                                   format_func=labels.__getitem__)]
+        p = run["priority"]
+        show = {"critical": st.error, "high": st.warning}.get(p["level"], st.info)
+        show(f"**Priority: {p['level']}.** Most serious problem: {money(p['why'])}")
         st.markdown("**Why it was held**\n\n" + "\n".join(f"- {money(reason)}" for reason in run["reasons"]))
         if run.get("issues"):
             with st.expander("Checks that still fail", expanded=True):

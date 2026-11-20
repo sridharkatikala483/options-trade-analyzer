@@ -40,8 +40,8 @@ src/options_trade_analyzer/
   clock.py                              today()/now(): the only clock; a snapshot replay freezes it
   injection.py                          prompt-injection monitor for headlines: flagged ones are withheld, run held
   acceptance.py                         acceptance gate: thresholds and pass/fail per setup (score_reports.py prints it)
-  review.py                             Checkpoint 6 outcomes (shown / warning / held for review / refused), run log
-                                        data/runs/*.jsonl (gitignored), review queue and reviewer decisions
+  review.py                             Checkpoint 6 outcomes (shown / warning / held for review / refused), run log,
+                                        data/runs/*.jsonl (gitignored), review queue sorted by priority, decisions
   jobs.py                               background analysis runs for the dashboard (survive reloads, one at a time)
   answer_keys.py                        what a correct report must and must not say, built from the snapshot
   data/provider.py                      MarketDataProvider Protocol + YFinanceProvider
@@ -139,7 +139,7 @@ Key seams to keep intact:
 - yfinance `.news` currently returns nothing; headlines come from RSS in `data/news.py` instead.
 - `TOT_PROPOSER=rules` runs the alternative search without LLM calls (default `llm`); off-menu or
   unparseable proposals fall back to the default choices and are counted in the tool output.
-- `FINNHUB_API_KEY` and the Schwab keys are defined in `.env.example` but not used by code yet.
+- `config.FINNHUB_API_KEY` is read but not used by code yet (a planned news and earnings source).
 - Hand-score judgment errors with `docs/evaluation/hand_scoring.md`; record each ruled-out answer-key flag in
   `data/answer_keys/hand_checks.json` with a note.
 - Tests should be deterministic and offline (no network, no LLM). Use `data/snapshots/` for market data.

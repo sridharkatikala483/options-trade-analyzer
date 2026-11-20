@@ -12,9 +12,13 @@ Every dashboard run is appended to data/runs/runs.jsonl (gitignored) with its re
 report and full trace. A reviewer's decision (approved / edited / rejected) is appended to reviews.jsonl,
 never written over the run, so the log stays an audit trail. Timestamps use clock.wall_now(): a snapshot
 replay freezes the market clock, not the time a person ran or reviewed something.
+
+The queue is sorted by priority (critical, high, medium, low): the most dangerous problem in a held run
+decides its level, so a made-up maximum loss is reviewed before a missing implied volatility.
 """
 
 import json
+import re
 import threading
 import uuid
 from pathlib import Path
@@ -26,6 +30,7 @@ Outcome = Literal["shown", "shown_with_warning", "needs_review", "refused"]
 Decision = Literal["approved", "edited", "rejected"]
 LOG_DIR = config.PROJECT_ROOT / "data" / "runs"
 _lock = threading.Lock()
+SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
 
 
 def decide(issues: list[str], metrics: dict, findings: dict, flags: list, error: str | None = None,
@@ -156,9 +161,53 @@ def runs(log_dir: Path = LOG_DIR) -> list[dict]:
     return [run | {"review": reviews.get(run["run_id"])} for run in reversed(_read("runs.jsonl", log_dir))]
 
 
+# --- review priority (Checkpoint 6 feedback: the most dangerous errors first) ---
+
+LEVELS = ("low", "medium", "high", "critical")
+KEY_NUMBER = re.compile(r"\b(max(imum)?\s+(loss|gain|profit)|break[- ]?even|premium|cost|debit|credit|chance|"
+                        r"probability|loses?|lose)\b", re.I)
+ISSUE_LEVELS = [  # verifier issue opening -> level; the first match wins, anything unknown counts as high
+    (re.compile(r"^Report contains a recommendation"), "critical"),
+    (re.compile(r" was called with (strike|expiration) "), "critical"),
+    (re.compile(r"^(Number not found|Date not returned)"), "high"),
+    (re.compile(r"^(Overconfident wording|The alternative's trade-off|Missing statement|Report describes liquidity)"),
+     "high"),
+    (re.compile(r"^(Required tool not called|Citation|The report talks about its own revision)"), "medium"),
+]
+REASON_LEVELS = [  # decide() reason opening -> level; "N check(s) still fail" is covered by the issues
+    (re.compile(r"headline\(s\) read like instructions"), "critical"),
+    (re.compile(r"^The run stopped with an error|^The .+ failed, so part of the analysis is missing"), "high"),
+    (re.compile(r"^A data source failed|^The LLM Critic's reply"), "medium"),
+    (re.compile(r"^Market data was missing"), "low"),
+]
+
+
+def _issue_level(issue: str, report: str) -> str:
+    if issue.startswith("Number not found"):
+        token = issue.split(": ", 1)[-1].removesuffix(".")
+        sentences = [s for s in SENTENCE.split(report) if token in s]
+        if any(KEY_NUMBER.search(s) for s in sentences):
+            return "critical"  # a made-up maximum loss, breakeven, cost or chance misleads the most
+    return next((level for pattern, level in ISSUE_LEVELS if pattern.search(issue)), "high")
+
+
+def priority(record: dict) -> dict:
+    """How urgently a held run needs a person: its most dangerous problem decides the level."""
+    found = [(_issue_level(i, record.get("report") or ""), i) for i in record.get("issues") or []]
+    found += [(level, r) for r in record.get("reasons") or []
+              for pattern, level in REASON_LEVELS if pattern.search(r)]
+    if not found:
+        return {"level": "high", "rank": LEVELS.index("high"), "why": "held without a recorded reason"}
+    level, why = max(found, key=lambda f: LEVELS.index(f[0]))
+    return {"level": level, "rank": LEVELS.index(level), "why": why,
+            "count": sum(f[0] == level for f in found)}
+
+
 def queue(log_dir: Path = LOG_DIR) -> list[dict]:
-    """Runs held for review that nobody has decided yet, oldest first (first in, first reviewed)."""
-    return [r for r in reversed(runs(log_dir)) if r["outcome"] == "needs_review" and r["review"] is None]
+    """Runs held for review that nobody has decided yet: most dangerous first, oldest first within a level."""
+    pending = [r | {"priority": priority(r)} for r in reversed(runs(log_dir))
+               if r["outcome"] == "needs_review" and r["review"] is None]
+    return sorted(pending, key=lambda r: -r["priority"]["rank"])  # stable: keeps oldest first within a level
 
 
 def escalation_rate(records: list[dict]) -> float | None:
