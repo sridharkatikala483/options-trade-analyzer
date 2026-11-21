@@ -13,6 +13,9 @@ Capstone project for the Agentic AI program (Carnegie Mellon University School o
 Education), by Sridhar Katikala. The full design, decision history and every evaluation result are in
 [docs/DESIGN.md](docs/DESIGN.md).
 
+**Video presentation:** [vimeo.com/1248877894](https://vimeo.com/1248877894) (architecture, evaluation results
+and a live demo).
+
 ## The problem
 
 New options traders often lose money even when they are right about the stock's direction: implied volatility
